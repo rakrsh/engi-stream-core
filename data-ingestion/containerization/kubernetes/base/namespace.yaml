@@ -1,0 +1,34 @@
+# Kubernetes base resources
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: data-platform
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: platform-config
+  namespace: data-platform
+data:
+  kafka.servers: "kafka:29092"
+  database.url: "postgresql://postgres:postgres@postgres:5432/energy_data"
+  airflow.database.url: "postgresql+psycopg2://postgres:postgres@postgres:5432/energy_data"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: api-keys
+  namespace: data-platform
+type: Opaque
+stringData:
+  nrel.api.key: ""
+  nasa.api.key: "DEMO_KEY"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: database-credentials
+  namespace: data-platform
+type: Opaque
+stringData:
+  password: postgres

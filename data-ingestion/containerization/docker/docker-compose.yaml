@@ -1,0 +1,208 @@
+version: '3.8'
+
+services:
+  # ============================================
+  # Kafka & Zookeeper
+  # ============================================
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    volumes:
+      - zookeeper_data:/var/lib/zookeeper/data
+    networks:
+      - data-platform
+
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: kafka
+    depends_on:
+      - zookeeper
+    ports:
+      - "9092:9092"
+      - "29092:29092"
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:29092,PLAINTEXT_HOST://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+      KAFKA_LOG_RETENTION_HOURS: 168
+      KAFKA_LOG_SEGMENT_BYTES: 1073741824
+    volumes:
+      - kafka_data:/var/lib/kafka/data
+    networks:
+      - data-platform
+
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: postgres
+    environment:
+      POSTGRES_DB: energy_data
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - data-platform
+
+  # ============================================
+  # Airflow
+  # ============================================
+  airflow-webserver:
+    image: apache/airflow:2.8.1-python3.8
+    container_name: airflow-webserver
+    depends_on:
+      - postgres
+      - kafka
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/energy_data
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__DAGS_ARE_PAUSED_AT_CREATION: 'true'
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      AIRFLOW__API__AUTH_BACKENDS: basic_auth
+      _PIP_ADDITIONAL_REQUIREMENTS: kafka-python great-expectations psycopg2-binary aiohttp
+    volumes:
+      - ./services/orchestration/airflow/dags:/opt/airflow/dags
+      - ./services/orchestration/spark/jobs:/opt/spark/jobs
+      - airflow_logs:/opt/airflow/logs
+    ports:
+      - "8080:8080"
+    command: webserver
+    networks:
+      - data-platform
+
+  airflow-scheduler:
+    image: apache/airflow:2.8.1-python3.8
+    container_name: airflow-scheduler
+    depends_on:
+      - postgres
+      - kafka
+      - airflow-webserver
+    environment:
+      AIRFLOW__CORE__EXECUTOR: LocalExecutor
+      AIRFLOW__DATABASE__SQL_ALCHEMY_CONN: postgresql+psycopg2://postgres:postgres@postgres:5432/energy_data
+      AIRFLOW__CORE__FERNET_KEY: ''
+      AIRFLOW__CORE__LOAD_EXAMPLES: 'false'
+      _PIP_ADDITIONAL_REQUIREMENTS: kafka-python great-expectations psycopg2-binary aiohttp
+    volumes:
+      - ./services/orchestration/airflow/dags:/opt/airflow/dags
+      - ./services/orchestration/spark/jobs:/opt/spark/jobs
+      - airflow_logs:/opt/airflow/logs
+    command: scheduler
+    networks:
+      - data-platform
+
+  # ============================================
+  # Spark
+  # ============================================
+  spark-master:
+    image: bitnami/spark:3.5
+    container_name: spark-master
+    environment:
+      SPARK_MODE: master
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    ports:
+      - "8080:8080"
+      - "7077:7077"
+    networks:
+      - data-platform
+
+  spark-worker:
+    image: bitnami/spark:3.5
+    container_name: spark-worker
+    depends_on:
+      - spark-master
+    environment:
+      SPARK_MODE: worker
+      SPARK_MASTER_URL: spark://spark-master:7077
+      SPARK_WORKER_MEMORY: 2G
+      SPARK_WORKER_CORES: 2
+      SPARK_RPC_AUTHENTICATION_ENABLED: "no"
+      SPARK_RPC_ENCRYPTION_ENABLED: "no"
+      SPARK_LOCAL_STORAGE_ENCRYPTION_ENABLED: "no"
+      SPARK_SSL_ENABLED: "no"
+    networks:
+      - data-platform
+
+  # ============================================
+  # Data Ingestion Service
+  # ============================================
+  ingestion-service:
+    build:
+      context: ../..
+      dockerfile: containerization/docker/ingestion.dockerfile
+    container_name: ingestion-service
+    depends_on:
+      - kafka
+      - postgres
+    environment:
+      KAFKA_BOOTSTRAP_SERVERS: kafka:29092
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/energy_data
+      NREL_API_KEY: ${NREL_API_KEY:-}
+      NASA_API_KEY: ${NASA_API_KEY:-DEMO_KEY}
+    volumes:
+      - ./services/ingestion/src:/app/src
+      - ./services/ingestion/.env:/app/.env
+    networks:
+      - data-platform
+
+  # ============================================
+  # Great Expectations
+  # ============================================
+  great-expectations:
+    build:
+      context: ../..
+      dockerfile: containerization/docker/great-expectations.dockerfile
+    container_name: great-expectations
+    environment:
+      GREAT_EXPECTATIONS_HOME: /tmp/gx
+      DATABASE_URL: postgresql://postgres:postgres@postgres:5432/energy_data
+    volumes:
+      - ./quality-control:/tmp/gx
+    networks:
+      - data-platform
+
+  # ============================================
+  # MinIO (S3-compatible storage)
+  # ============================================
+  minio:
+    image: minio/minio:latest
+    container_name: minio
+    environment:
+      MINIO_ROOT_USER: minioadmin
+      MINIO_ROOT_PASSWORD: minioadmin
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    command: server /data --console-address ":9001"
+    networks:
+      - data-platform
+
+networks:
+  data-platform:
+    driver: bridge
+
+volumes:
+  zookeeper_data:
+  kafka_data:
+  postgres_data:
+  airflow_logs:
+  minio_data:

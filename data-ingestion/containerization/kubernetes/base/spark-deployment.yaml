@@ -1,0 +1,89 @@
+# Spark Deployment
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-master
+  labels:
+    app: spark
+    component: master
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: spark
+      component: master
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: master
+    spec:
+      containers:
+      - name: master
+        image: bitnami/spark:3.5
+        ports:
+        - containerPort: 8080
+        - containerPort: 7077
+        env:
+        - name: SPARK_MODE
+          value: master
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: spark-master
+spec:
+  selector:
+    app: spark
+    component: master
+  ports:
+  - port: 8080
+    targetPort: 8080
+  - port: 7077
+    targetPort: 7077
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: spark-worker
+  labels:
+    app: spark
+    component: worker
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: spark
+      component: worker
+  template:
+    metadata:
+      labels:
+        app: spark
+        component: worker
+    spec:
+      containers:
+      - name: worker
+        image: bitnami/spark:3.5
+        env:
+        - name: SPARK_MODE
+          value: worker
+        - name: SPARK_MASTER_URL
+          value: spark://spark-master:7077
+        - name: SPARK_WORKER_MEMORY
+          value: 2G
+        - name: SPARK_WORKER_CORES
+          value: "2"
+        resources:
+          requests:
+            memory: "2Gi"
+            cpu: "1000m"
+          limits:
+            memory: "4Gi"
+            cpu: "2000m"
