@@ -1,0 +1,248 @@
+# Default configuration for data-platform
+# This file contains the default values for the Helm chart
+
+# Global settings
+global:
+  nameOverride: ""
+  fullnameOverride: ""
+  namespace: default
+
+# Ingestion Service
+ingestion:
+  enabled: true
+  replicaCount: 2
+  image:
+    repository: ingestion-service
+    tag: latest
+    pullPolicy: IfNotPresent
+  service:
+    type: ClusterIP
+    port: 8000
+  config:
+    kafka:
+      bootstrapServers: "kafka:29092"
+    database:
+      url: "postgresql://postgres:postgres@postgres:5432/energy_data"
+    nrel:
+      apiKey: ""
+      baseUrl: "https://developer.nrel.gov/api/wind"
+    nasa:
+      apiKey: "DEMO_KEY"
+      baseUrl: "https://api.nasa.gov"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Airflow
+airflow:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: apache/airflow
+    tag: 2.8.1-python3.8
+    pullPolicy: IfNotPresent
+  config:
+    executor: LocalExecutor
+    database:
+      sqlAlchemyConn: "postgresql+psycopg2://postgres:postgres@postgres:5432/energy_data"
+    loadExamples: "false"
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  persistence:
+    enabled: true
+    size: 10Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Kafka
+kafka:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: confluentinc/cp-kafka
+    tag: 7.5.0
+    pullPolicy: IfNotPresent
+  config:
+    brokerId: "1"
+    zookeeperConnect: "zookeeper:2181"
+    offsetsTopicReplicationFactor: 1
+    autoCreateTopicsEnable: "true"
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 2Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Zookeeper (for Kafka)
+zookeeper:
+  enabled: true
+  replicaCount: 1
+  image:
+    repository: confluentinc/cp-zookeeper
+    tag: 7.5.0
+    pullPolicy: IfNotPresent
+  config:
+    clientPort: 2181
+    tickTime: 2000
+  persistence:
+    enabled: true
+    size: 5Gi
+  resources:
+    limits:
+      cpu: 250m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Spark
+spark:
+  enabled: true
+  master:
+    replicaCount: 1
+    image:
+      repository: bitnami/spark
+      tag: "3.5"
+      pullPolicy: IfNotPresent
+    config:
+      mode: master
+    resources:
+      limits:
+        cpu: 1000m
+        memory: 2Gi
+      requests:
+        cpu: 500m
+        memory: 1Gi
+  worker:
+    replicaCount: 2
+    image:
+      repository: bitnami/spark
+      tag: "3.5"
+      pullPolicy: IfNotPresent
+    config:
+      mode: worker
+      workerMemory: 2G
+      workerCores: "2"
+    resources:
+      limits:
+        cpu: 2000m
+        memory: 4Gi
+      requests:
+        cpu: 1000m
+        memory: 2Gi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# PostgreSQL
+postgresql:
+  enabled: true
+  image:
+    repository: postgres
+    tag: 15-alpine
+    pullPolicy: IfNotPresent
+  config:
+    database: energy_data
+    username: postgres
+    password: postgres
+  persistence:
+    enabled: true
+    size: 20Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
+    requests:
+      cpu: 100m
+      memory: 256Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Great Expectations
+greatExpectations:
+  enabled: true
+  image:
+    repository: great-expectations
+    tag: latest
+    pullPolicy: IfNotPresent
+  config:
+    checkpointName: energy_data_checkpoint
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# MinIO (S3-compatible storage)
+minio:
+  enabled: true
+  image:
+    repository: minio/minio
+    tag: latest
+    pullPolicy: IfNotPresent
+  config:
+    rootUser: minioadmin
+    rootPassword: minioadmin
+  service:
+    type: ClusterIP
+    port: 9000
+    consolePort: 9001
+  persistence:
+    enabled: true
+    size: 50Gi
+  resources:
+    limits:
+      cpu: 500m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 512Mi
+  nodeSelector: {}
+  tolerations: []
+  affinity: {}
+
+# Network Policy
+networkPolicy:
+  enabled: false
+  ingress:
+    enabled: true
+  egress:
+    enabled: true
+
+# Monitoring
+monitoring:
+  enabled: false
+  prometheus:
+    enabled: false
+  grafana:
+    enabled: false

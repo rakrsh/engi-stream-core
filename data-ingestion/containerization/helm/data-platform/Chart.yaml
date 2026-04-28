@@ -1,0 +1,36 @@
+apiVersion: v2
+name: data-platform
+description: A Helm chart for the data engineering platform
+type: application
+version: 0.1.0
+appVersion: "1.0.0"
+
+keywords:
+  - data-engineering
+  - ingestion
+  - airflow
+  - kafka
+  - spark
+
+maintainers:
+  - name: Data Engineering Team
+    email: data-eng@example.com
+
+dependencies:
+  # PostgreSQL
+  - name: postgresql
+    version: 12.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: postgresql.enabled
+
+  # Kafka
+  - name: kafka
+    version: 24.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: kafka.enabled
+
+  # Spark
+  - name: spark
+    version: 6.x.x
+    repository: https://charts.bitnami.com/bitnami
+    condition: spark.enabled
