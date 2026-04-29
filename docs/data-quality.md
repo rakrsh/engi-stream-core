@@ -198,7 +198,7 @@ from great_expectations.core import ExpectationConfiguration
 class CustomValidator:
     def validate_custom_data(self, data):
         df = PandasDataset(data)
-        
+
         expectations = [
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
@@ -209,10 +209,10 @@ class CustomValidator:
                 }
             )
         ]
-        
+
         for exp in expectations:
             df.expectation_suite.add_expectation(exp)
-        
+
         return df.validate()
 ```
 

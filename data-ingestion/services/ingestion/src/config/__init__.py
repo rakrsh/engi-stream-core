@@ -1,5 +1,6 @@
 """Logging configuration for the ingestion service."""
 import logging
+import os
 import sys
 from typing import Any
 
@@ -16,10 +17,10 @@ class IngestionLogger:
     def _configure(self) -> None:
         """Configure logger based on environment."""
         settings = get_ingestion_settings()
-        
+
         # Set level based on environment
         level = logging.INFO
-        if sys.getenv("ENV", "production") == "development":
+        if os.getenv("ENV", "production") == "development":
             level = logging.DEBUG
 
         self._logger.setLevel(level)
@@ -30,14 +31,14 @@ class IngestionLogger:
             handler.setLevel(level)
 
             # Use JSON format in production, human-readable in dev
-            if sys.getenv("ENV", "production") == "production":
+            if os.getenv("ENV", "production") == "production":
                 formatter = logging.Formatter(
                     '{"time": "%(asctime)s", "level": "%(levelname)s", '
                     '"name": "%(name)s", "message": "%(message)s"}'
                 )
             else:
                 formatter = logging.Formatter(
-                    '%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+                    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
                 )
 
             handler.setFormatter(formatter)

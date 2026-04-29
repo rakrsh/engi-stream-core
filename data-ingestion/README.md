@@ -39,7 +39,7 @@ A comprehensive data engineering platform that pulls NREL Wind Simulation data a
 - Supports both batch and real-time ingestion modes
 
 ### 2. Orchestration (`services/orchestration/`)
-- **Airflow DAGs**: 
+- **Airflow DAGs**:
   - `daily_batch_ingestion.py` - Daily batch data load
   - `realtime_telemetry.py` - Real-time telemetry processing
 - **Kafka Producers/Consumers**: For message streaming

@@ -8,10 +8,8 @@ from datetime import datetime
 from typing import Any, Optional
 
 import aiohttp
-
-from config.settings import get_ingestion_settings
 from config.logger import get_logger
-
+from config.settings import get_ingestion_settings
 
 logger = get_logger(__name__)
 
@@ -19,6 +17,7 @@ logger = get_logger(__name__)
 @dataclass
 class WindDataPoint:
     """Represents a single wind data measurement."""
+
     timestamp: datetime
     wind_speed: float  # m/s
     wind_direction: float  # degrees
@@ -35,6 +34,7 @@ class WindDataPoint:
 @dataclass
 class WindDataset:
     """Represents a complete wind dataset from NREL."""
+
     dataset_id: str
     location_name: str
     data_points: list[WindDataPoint]
@@ -63,8 +63,24 @@ class NRELWindFetcher:
 
     def _degrees_to_cardinal(self, degrees: float) -> str:
         """Convert degrees to cardinal direction."""
-        directions = ["N", "NNE", "NE", "ENE", "E", "ESE", "SE", "SSE",
-                      "S", "SSW", "SW", "WSW", "W", "WNW", "NW", "NNW"]
+        directions = [
+            "N",
+            "NNE",
+            "NE",
+            "ENE",
+            "E",
+            "ESE",
+            "SE",
+            "SSE",
+            "S",
+            "SSW",
+            "SW",
+            "WSW",
+            "W",
+            "WNW",
+            "NW",
+            "NNW",
+        ]
         index = round(degrees / 22.5) % 16
         return directions[index]
 
@@ -74,7 +90,7 @@ class NRELWindFetcher:
         lon: float,
         start_date: Optional[datetime] = None,
         end_date: Optional[datetime] = None,
-        hub_height: float = 80.0
+        hub_height: float = 80.0,
     ) -> WindDataset:
         """Fetch wind data for a given location.
 
@@ -97,7 +113,7 @@ class NRELWindFetcher:
             "lat": lat,
             "lon": lon,
             "hub_height": hub_height,
-            "attr": "wind_speed,wind_direction,air_density,temperature,pressure"
+            "attr": "wind_speed,wind_direction,air_density,temperature,pressure",
         }
 
         if start_date:
@@ -109,8 +125,7 @@ class NRELWindFetcher:
 
         try:
             async with session.get(
-                f"{settings.nrel_base_url}{settings.nrel_endpoint}",
-                params=params
+                f"{settings.nrel_base_url}{settings.nrel_endpoint}", params=params
             ) as response:
                 response.raise_for_status()
                 data = await response.json()
@@ -123,11 +138,7 @@ class NRELWindFetcher:
             return self._generate_mock_data(lat, lon, hub_height)
 
     def _parse_wind_response(
-        self,
-        data: dict[str, Any],
-        lat: float,
-        lon: float,
-        hub_height: float
+        self, data: dict[str, Any], lat: float, lon: float, hub_height: float
     ) -> WindDataset:
         """Parse the API response into a WindDataset."""
         data_points = []
@@ -140,18 +151,26 @@ class NRELWindFetcher:
 
         for i, timestamp in enumerate(times):
             data_point = WindDataPoint(
-                timestamp=datetime.fromisoformat(timestamp) if isinstance(timestamp, str) else datetime.now(),
+                timestamp=datetime.fromisoformat(timestamp)
+                if isinstance(timestamp, str)
+                else datetime.now(),
                 wind_speed=wind_speeds[i] if i < len(wind_speeds) else 0.0,
                 wind_direction=wind_directions[i] if i < len(wind_directions) else 0.0,
                 wind_direction_cardinal=self._degrees_to_cardinal(
                     wind_directions[i] if i < len(wind_directions) else 0.0
                 ),
-                air_density=outputs.get("air_density", [None] * len(times))[i] if i < len(outputs.get("air_density", [])) else None,
-                temperature=outputs.get("temperature", [None] * len(times))[i] if i < len(outputs.get("temperature", [])) else None,
-                pressure=outputs.get("pressure", [None] * len(times))[i] if i < len(outputs.get("pressure", [])) else None,
+                air_density=outputs.get("air_density", [None] * len(times))[i]
+                if i < len(outputs.get("air_density", []))
+                else None,
+                temperature=outputs.get("temperature", [None] * len(times))[i]
+                if i < len(outputs.get("temperature", []))
+                else None,
+                pressure=outputs.get("pressure", [None] * len(times))[i]
+                if i < len(outputs.get("pressure", []))
+                else None,
                 hub_height=hub_height,
                 location_lat=lat,
-                location_lon=lon
+                location_lon=lon,
             )
             data_points.append(data_point)
 
@@ -160,14 +179,11 @@ class NRELWindFetcher:
             location_name=data.get("meta", {}).get("location", "Unknown"),
             data_points=data_points,
             fetched_at=datetime.now(),
-            metadata=data.get("meta", {})
+            metadata=data.get("meta", {}),
         )
 
     def _generate_mock_data(
-        self,
-        lat: float,
-        lon: float,
-        hub_height: float
+        self, lat: float, lon: float, hub_height: float
     ) -> WindDataset:
         """Generate mock wind data for development/testing."""
         import random
@@ -191,7 +207,7 @@ class NRELWindFetcher:
                 pressure=round(random.uniform(95000, 105000), 0),
                 hub_height=hub_height,
                 location_lat=lat,
-                location_lon=lon
+                location_lon=lon,
             )
             data_points.append(data_point)
 
@@ -202,13 +218,11 @@ class NRELWindFetcher:
             location_name=f"Location ({lat}, {lon})",
             data_points=data_points,
             fetched_at=datetime.now(),
-            metadata={"source": "mock", "hub_height": hub_height}
+            metadata={"source": "mock", "hub_height": hub_height},
         )
 
     async def fetch_multiple_locations(
-        self,
-        locations: list[tuple[float, float]],
-        hub_height: float = 80.0
+        self, locations: list[tuple[float, float]], hub_height: float = 80.0
     ) -> list[WindDataset]:
         """Fetch wind data for multiple locations.
 

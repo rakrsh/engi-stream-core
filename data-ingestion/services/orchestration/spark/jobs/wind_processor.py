@@ -8,33 +8,33 @@ from datetime import datetime
 from typing import Optional
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import (
-    col, to_json, from_json, window, avg, min as spark_min,
-    max as spark_max, stddev, count, when, lit, udf, to_timestamp
-)
-from pyspark.sql.types import (
-    StructType, StructField, StringType, DoubleType, TimestampType,
-    IntegerType, FloatType
-)
-
+from pyspark.sql.functions import avg, col, count, from_json, lit
+from pyspark.sql.functions import max as spark_max
+from pyspark.sql.functions import min as spark_min
+from pyspark.sql.functions import (stddev, to_json, to_timestamp, udf, when,
+                                   window)
+from pyspark.sql.types import (DoubleType, FloatType, IntegerType, StringType,
+                               StructField, StructType, TimestampType)
 
 # Define schema for wind data
-WIND_DATA_SCHEMA = StructType([
-    StructField("dataset_id", StringType(), True),
-    StructField("location_name", StringType(), True),
-    StructField("timestamp", StringType(), True),
-    StructField("wind_speed", DoubleType(), True),
-    StructField("wind_direction", DoubleType(), True),
-    StructField("wind_direction_cardinal", StringType(), True),
-    StructField("turbulence_intensity", DoubleType(), True),
-    StructField("air_density", DoubleType(), True),
-    StructField("temperature", DoubleType(), True),
-    StructField("pressure", DoubleType(), True),
-    StructField("hub_height", DoubleType(), True),
-    StructField("location_lat", DoubleType(), True),
-    StructField("location_lon", DoubleType(), True),
-    StructField("fetched_at", StringType(), True),
-])
+WIND_DATA_SCHEMA = StructType(
+    [
+        StructField("dataset_id", StringType(), True),
+        StructField("location_name", StringType(), True),
+        StructField("timestamp", StringType(), True),
+        StructField("wind_speed", DoubleType(), True),
+        StructField("wind_direction", DoubleType(), True),
+        StructField("wind_direction_cardinal", StringType(), True),
+        StructField("turbulence_intensity", DoubleType(), True),
+        StructField("air_density", DoubleType(), True),
+        StructField("temperature", DoubleType(), True),
+        StructField("pressure", DoubleType(), True),
+        StructField("hub_height", DoubleType(), True),
+        StructField("location_lat", DoubleType(), True),
+        StructField("location_lon", DoubleType(), True),
+        StructField("fetched_at", StringType(), True),
+    ]
+)
 
 
 @dataclass
@@ -50,14 +50,14 @@ class WindDataProcessor:
 
     def _setup_spark_config(self) -> None:
         """Configure Spark session."""
-        self.spark.conf.set("spark.sql.streaming.checkpointLocation", 
-                           self.checkpoint_location)
+        self.spark.conf.set(
+            "spark.sql.streaming.checkpointLocation", self.checkpoint_location
+        )
 
     def read_from_kafka(self, topic: str = "batch.raw") -> DataFrame:
         """Read wind data from Kafka."""
         return (
-            self.spark.readStream
-            .format("kafka")
+            self.spark.readStream.format("kafka")
             .option("kafka.bootstrap.servers", self.kafka_bootstrap_servers)
             .option("subscribe", topic)
             .option("startingOffsets", "earliest")
@@ -72,24 +72,22 @@ class WindDataProcessor:
         ).select("data.*")
 
         # Add processing timestamp
-        parsed = parsed.withColumn("processed_at", to_timestamp(lit(datetime.now().isoformat())))
+        parsed = parsed.withColumn(
+            "processed_at", to_timestamp(lit(datetime.now().isoformat()))
+        )
 
         # Calculate derived fields
         parsed = parsed.withColumn(
-            "wind_power_density",
-            col("air_density") * col("wind_speed") ** 3 / 2
+            "wind_power_density", col("air_density") * col("wind_speed") ** 3 / 2
         )
 
         # Add quality flag
         parsed = parsed.withColumn(
             "quality_flag",
-            when(
-                (col("wind_speed") < 0) | (col("wind_speed") > 50), "invalid"
-            ).when(
-                (col("temperature") < -50) | (col("temperature") > 60), "invalid"
-            ).when(
-                (col("pressure") < 80000) | (col("pressure") > 110000), "invalid"
-            ).otherwise("valid")
+            when((col("wind_speed") < 0) | (col("wind_speed") > 50), "invalid")
+            .when((col("temperature") < -50) | (col("temperature") > 60), "invalid")
+            .when((col("pressure") < 80000) | (col("pressure") > 110000), "invalid")
+            .otherwise("valid"),
         )
 
         return parsed
@@ -107,15 +105,14 @@ class WindDataProcessor:
                 avg("temperature").alias("avg_temperature"),
                 avg("pressure").alias("avg_pressure"),
                 avg("air_density").alias("avg_air_density"),
-                count("*").alias("record_count")
+                count("*").alias("record_count"),
             )
         )
 
     def write_to_console(self, df: DataFrame) -> None:
         """Write processed data to console."""
         query = (
-            df.writeStream
-            .format("console")
+            df.writeStream.format("console")
             .outputMode("complete")
             .option("truncate", False)
             .start()
@@ -125,8 +122,7 @@ class WindDataProcessor:
     def write_to_parquet(self, df: DataFrame, output_path: str) -> None:
         """Write processed data to Parquet files."""
         query = (
-            df.writeStream
-            .format("parquet")
+            df.writeStream.format("parquet")
             .option("path", output_path)
             .option("checkpointLocation", f"{self.checkpoint_location}/parquet")
             .outputMode("append")
@@ -137,8 +133,7 @@ class WindDataProcessor:
     def write_to_postgresql(self, df: DataFrame, table: str) -> None:
         """Write processed data to PostgreSQL."""
         query = (
-            df.writeStream
-            .format("jdbc")
+            df.writeStream.format("jdbc")
             .option("url", "jdbc:postgresql://localhost:5432/energy_data")
             .option("dbtable", table)
             .option("user", "postgres")
@@ -153,7 +148,7 @@ class WindDataProcessor:
 def run_wind_processing_job(
     kafka_servers: str = "localhost:9092",
     output_path: str = "/tmp/wind_data",
-    mode: str = "batch"
+    mode: str = "batch",
 ) -> None:
     """Run the wind data processing job.
 
@@ -164,9 +159,10 @@ def run_wind_processing_job(
     """
     # Create Spark session
     spark = (
-        SparkSession.builder
-        .appName("WindDataProcessing")
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
+        SparkSession.builder.appName("WindDataProcessing")
+        .config(
+            "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
+        )
         .config("spark.sql.streaming.checkpointLocation", "/tmp/spark/checkpoints")
         .getOrCreate()
     )
@@ -193,5 +189,6 @@ def run_wind_processing_job(
 
 if __name__ == "__main__":
     import sys
+
     mode = sys.argv[1] if len(sys.argv) > 1 else "batch"
     run_wind_processing_job(mode=mode)

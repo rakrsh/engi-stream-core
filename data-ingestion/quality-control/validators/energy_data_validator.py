@@ -7,17 +7,14 @@ import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
 
+from config.logger import get_logger
+from config.settings import get_ingestion_settings
 from great_expectations import DataContext
 from great_expectations.core.batch import BatchRequest
 from great_expectations.data_asset import FileDataAsset
 from great_expectations.dataset import PandasDataset
-
-from config.settings import get_ingestion_settings
-from config.logger import get_logger
-from great_expectations.expectations.expectation_configuration import (
+from great_expectations.expectations.expectation_configuration import \
     ExpectationConfiguration
-)
-
 
 logger = get_logger(__name__)
 
@@ -26,13 +23,13 @@ class DataQualityValidator:
     """Validates data quality using Great Expectations."""
 
     def __init__(
-        self,
-        context_path: Optional[str] = None,
-        checkpoint_name: Optional[str] = None
+        self, context_path: Optional[str] = None, checkpoint_name: Optional[str] = None
     ) -> None:
         self._settings = get_ingestion_settings()
         self._context_path = context_path or "/tmp/gx"
-        self._checkpoint_name = checkpoint_name or self._settings.great_expectations_checkpoint
+        self._checkpoint_name = (
+            checkpoint_name or self._settings.great_expectations_checkpoint
+        )
         self._context: Optional[DataContext] = None
 
     def _get_context(self) -> DataContext:
@@ -63,49 +60,31 @@ class DataQualityValidator:
         expectations = [
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
-                kwargs={
-                    "column": "wind_speed",
-                    "min_value": 0.0,
-                    "max_value": 50.0
-                }
+                kwargs={"column": "wind_speed", "min_value": 0.0, "max_value": 50.0},
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
                 kwargs={
                     "column": "wind_direction",
                     "min_value": 0.0,
-                    "max_value": 360.0
-                }
+                    "max_value": 360.0,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
-                kwargs={
-                    "column": "temperature",
-                    "min_value": -50.0,
-                    "max_value": 60.0
-                }
+                kwargs={"column": "temperature", "min_value": -50.0, "max_value": 60.0},
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
-                kwargs={
-                    "column": "pressure",
-                    "min_value": 80000,
-                    "max_value": 110000
-                }
+                kwargs={"column": "pressure", "min_value": 80000, "max_value": 110000},
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_not_be_null",
-                kwargs={
-                    "column": "wind_speed",
-                    "mostly": 0.95
-                }
+                kwargs={"column": "wind_speed", "mostly": 0.95},
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_not_be_null",
-                kwargs={
-                    "column": "timestamp",
-                    "mostly": 1.0
-                }
+                kwargs={"column": "timestamp", "mostly": 1.0},
             ),
         ]
 
@@ -116,9 +95,9 @@ class DataQualityValidator:
             validation_results.append(result)
 
         # Get overall result
-        success = all(
-            r.success for r in validation_results
-        ) if validation_results else True
+        success = (
+            all(r.success for r in validation_results) if validation_results else True
+        )
 
         result = {
             "success": success,
@@ -131,10 +110,10 @@ class DataQualityValidator:
                     "expectation": r.expectation_config.expectation_type,
                     "column": r.expectation_config.kwargs.get("column"),
                     "success": r.success,
-                    "unexpected_percent": r.result.get("unexpected_percent", 0)
+                    "unexpected_percent": r.result.get("unexpected_percent", 0),
                 }
                 for r in validation_results
-            ]
+            ],
         }
 
         logger.info(
@@ -144,10 +123,7 @@ class DataQualityValidator:
 
         return result
 
-    def validate_atmospheric_data(
-        self,
-        data: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def validate_atmospheric_data(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Validate atmospheric data against expectations.
 
         Args:
@@ -168,39 +144,36 @@ class DataQualityValidator:
                 kwargs={
                     "column": "co2_concentration",
                     "min_value": 300.0,
-                    "max_value": 600.0
-                }
+                    "max_value": 600.0,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
                 kwargs={
                     "column": "ch4_concentration",
                     "min_value": 1500.0,
-                    "max_value": 2500.0
-                }
+                    "max_value": 2500.0,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
                 kwargs={
                     "column": "surface_temperature",
                     "min_value": 200.0,
-                    "max_value": 350.0
-                }
+                    "max_value": 350.0,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
                 kwargs={
                     "column": "sea_level_pressure",
                     "min_value": 90000,
-                    "max_value": 110000
-                }
+                    "max_value": 110000,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_not_be_null",
-                kwargs={
-                    "column": "co2_concentration",
-                    "mostly": 0.90
-                }
+                kwargs={"column": "co2_concentration", "mostly": 0.90},
             ),
         ]
 
@@ -211,9 +184,9 @@ class DataQualityValidator:
             validation_results.append(result)
 
         # Get overall result
-        success = all(
-            r.success for r in validation_results
-        ) if validation_results else True
+        success = (
+            all(r.success for r in validation_results) if validation_results else True
+        )
 
         result = {
             "success": success,
@@ -226,10 +199,10 @@ class DataQualityValidator:
                     "expectation": r.expectation_config.expectation_type,
                     "column": r.expectation_config.kwargs.get("column"),
                     "success": r.success,
-                    "unexpected_percent": r.result.get("unexpected_percent", 0)
+                    "unexpected_percent": r.result.get("unexpected_percent", 0),
                 }
                 for r in validation_results
-            ]
+            ],
         }
 
         logger.info(
@@ -239,10 +212,7 @@ class DataQualityValidator:
 
         return result
 
-    def validate_location_data(
-        self,
-        data: List[Dict[str, Any]]
-    ) -> Dict[str, Any]:
+    def validate_location_data(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Validate location data against expectations.
 
         Args:
@@ -261,16 +231,16 @@ class DataQualityValidator:
                 kwargs={
                     "column": "location_lat",
                     "min_value": -90.0,
-                    "max_value": 90.0
-                }
+                    "max_value": 90.0,
+                },
             ),
             ExpectationConfiguration(
                 expectation_type="expect_column_values_to_be_between",
                 kwargs={
                     "column": "location_lon",
                     "min_value": -180.0,
-                    "max_value": 180.0
-                }
+                    "max_value": 180.0,
+                },
             ),
         ]
 
@@ -292,7 +262,7 @@ class DataQualityValidator:
     def run_full_validation(
         self,
         wind_data: Optional[List[Dict[str, Any]]] = None,
-        atmospheric_data: Optional[List[Dict[str, Any]]] = None
+        atmospheric_data: Optional[List[Dict[str, Any]]] = None,
     ) -> Dict[str, Any]:
         """Run full data quality validation.
 
@@ -303,27 +273,27 @@ class DataQualityValidator:
         Returns:
             Combined validation results
         """
-        results = {
+        results: Dict[str, Any] = {
             "validation_run_at": datetime.now().isoformat(),
             "overall_success": True,
-            "validations": []
+            "validations": [],
         }
 
         if wind_data:
             wind_result = self.validate_wind_data(wind_data)
-            results["validations"].append({
-                "data_type": "wind",
-                "result": wind_result
-            })
-            results["overall_success"] = results["overall_success"] and wind_result["success"]
+            results["validations"].append({"data_type": "wind", "result": wind_result})
+            results["overall_success"] = (
+                results["overall_success"] and wind_result["success"]
+            )
 
         if atmospheric_data:
             atm_result = self.validate_atmospheric_data(atmospheric_data)
-            results["validations"].append({
-                "data_type": "atmospheric",
-                "result": atm_result
-            })
-            results["overall_success"] = results["overall_success"] and atm_result["success"]
+            results["validations"].append(
+                {"data_type": "atmospheric", "result": atm_result}
+            )
+            results["overall_success"] = (
+                results["overall_success"] and atm_result["success"]
+            )
 
         logger.info(
             f"Full validation complete: overall_success={results['overall_success']}"
@@ -348,7 +318,7 @@ def run_validation() -> Dict[str, Any]:
             "temperature": 25.0,
             "pressure": 101325.0,
             "location_lat": 39.7406,
-            "location_lon": -104.9917
+            "location_lon": -104.9917,
         }
     ]
 
