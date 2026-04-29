@@ -29,9 +29,9 @@ Refer to [AGENTS.md](AGENTS.md) for detailed agent specifications.
 
 ```text
 .
-├── .github/ workflows/     # CI/CD Pipeline configurations
+├── .github/workflows/      # CI/CD Pipeline configurations
 ├── AGENTS.md               # Detailed Agent Architecture
-├── docs/                   # Documentation site (MkDocs)
+├── docs/                   # Documentation site (Sphinx)
 ├── data-ingestion/         # Core application logic
 │   ├── services/
 │   │   ├── ingestion/      # Ingestion logic (NREL/NASA fetchers)
@@ -98,14 +98,14 @@ The project uses GitHub Actions for a comprehensive CI/CD pipeline:
 - **License Compliance**: Automated checks with `pip-licenses`.
 - **Docker**: Automatically builds and pushes images to GHCR.
 - **Helm**: Packages and pushes charts to the GitHub registry.
-- **Docs**: Automatically builds and deploys the documentation site.
+- **Docs**: Automatically builds and deploys the documentation site using Sphinx.
 
 ## 📖 Documentation
 
 Full documentation is available in the `docs/` folder and is automatically hosted via GitHub Pages. To view locally:
 ```bash
-pip install mkdocs-material
-mkdocs serve
+pip install -r docs/requirements.txt
+sphinx-build -b html docs/source docs/build/html
 ```
 
 ## 📜 License

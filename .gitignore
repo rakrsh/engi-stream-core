@@ -14,6 +14,7 @@ dist/
 downloads/
 eggs/
 .eggs/
+metastore_db/
 lib/
 lib64/
 parts/
@@ -69,7 +70,7 @@ instance/
 .scrapy
 
 # Sphinx documentation
-docs/_build/
+docs/build/
 
 # PyBuilder
 .pybuilder/
@@ -163,9 +164,6 @@ venv.bak/
 
 # Rope project settings
 .ropeproject
-
-# mkdocs documentation
-/site
 
 # mypy
 .mypy_cache/

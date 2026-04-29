@@ -4,15 +4,14 @@ Welcome to the **Engineering Data Platform** documentation. This platform provid
 
 ---
 
-## Table of Contents
+```{toctree}
+:maxdepth: 2
+:caption: Contents:
 
-1. [Quick Start](#quick-start)
-2. [Architecture Overview](#architecture-overview)
-3. [Configuration](#configuration)
-4. [Running the Platform](#running-the-platform)
-5. [Data Quality](#data-quality)
-6. [Monitoring](#monitoring)
-7. [Troubleshooting](#troubleshooting)
+configuration
+data-quality
+agents
+```
 
 ---
 
@@ -252,15 +251,6 @@ cat data-ingestion/quality-control/great_expectations/expectations.py
 NASA_API_KEY=DEMO_KEY
 ```
 
-### Logs Location
-
-| Service | Log Path |
-|---------|----------|
-| Ingestion | `docker-compose logs ingestion-service` |
-| Airflow | `docker-compose logs airflow-webserver` |
-| Spark | `docker-compose logs spark-master` |
-| Kafka | `docker-compose logs kafka` |
-
 ---
 
 ## API Reference
@@ -290,15 +280,14 @@ curl http://localhost:8000/status
 
 ## Next Steps
 
-- Review the [Architecture Documentation](../AGENTS.md)
+- Review the [Architecture Documentation](./agents.md)
 - Explore the [Configuration Guide](./configuration.md)
-- Set up [Monitoring](./monitoring.md)
-- Learn about [Security](./security.md)
+- Learn about [Data Quality](./data-quality.md)
 
 ---
 
 ## Support
 
-- **Issues**: https://github.com/your-org/engi-stream-core/issues
+- **Issues**: https://github.com/rakrsh/engi-stream-core/issues
 - **Documentation**: https://docs.example.com
 - **Slack**: #data-engineering-platform
