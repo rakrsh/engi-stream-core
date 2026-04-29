@@ -6,12 +6,11 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from airflow import DAG
-from airflow.operators.python import PythonOperator
 from airflow.operators.bash import BashOperator
-from airflow.providers.kafka.sensors.kafka import KafkaSensor
+from airflow.operators.python import PythonOperator
 from airflow.providers.http.operators.http import SimpleHttpOperator
+from airflow.providers.kafka.sensors.kafka import KafkaSensor
 from airflow.utils.task_group import TaskGroup
-
 
 default_args = {
     "owner": "data-engineering",
@@ -27,13 +26,13 @@ def process_telemetry_message(**context: Any) -> dict[str, Any]:
     """Process incoming telemetry message from Kafka."""
     ti = context["ti"]
     messages = ti.xcom_pull(task_ids=["listen_telemetry"])
-    
+
     processed = 0
     for msg in messages:
         if msg:
             # Process each message
             processed += 1
-    
+
     return {"processed": processed}
 
 
@@ -57,7 +56,6 @@ with DAG(
     catchup=False,
     tags=["telemetry", "realtime", "kafka"],
 ) as dag:
-    
     # Task Group: Kafka Consumption
     with TaskGroup("kafka_group") as kafka_group:
         # Listen for telemetry messages
@@ -69,7 +67,7 @@ with DAG(
             poke_interval=30,
             timeout=300,
         )
-        
+
         # Listen for batch messages
         listen_batch = KafkaSensor(
             task_id="listen_batch",
@@ -79,7 +77,7 @@ with DAG(
             poke_interval=60,
             timeout=600,
         )
-    
+
     # Task Group: Processing
     with TaskGroup("processing_group") as processing_group:
         # Process telemetry messages
@@ -87,19 +85,19 @@ with DAG(
             task_id="process_telemetry_message",
             python_callable=process_telemetry_message,
         )
-        
+
         # Update real-time metrics
         update_metrics = PythonOperator(
             task_id="update_realtime_metrics",
             python_callable=update_realtime_metrics,
         )
-        
+
         # Check for anomalies
         check_anomalies = PythonOperator(
             task_id="check_anomalies",
             python_callable=check_anomalies,
         )
-    
+
     # Task Group: Alerts
     with TaskGroup("alert_group") as alert_group:
         # Send alert if anomalies found
@@ -108,6 +106,6 @@ with DAG(
             bash_command="echo 'Anomaly detected'",
             trigger_rule="all_done",
         )
-    
+
     # Define dependencies
     kafka_group >> processing_group >> alert_group

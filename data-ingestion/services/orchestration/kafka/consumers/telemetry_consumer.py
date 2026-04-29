@@ -6,12 +6,10 @@ import json
 from datetime import datetime
 from typing import Any, Callable, Optional
 
+from config.logger import get_logger
+from config.settings import get_ingestion_settings
 from kafka import KafkaConsumer
 from kafka.errors import KafkaError
-
-from config.settings import get_ingestion_settings
-from config.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -20,9 +18,7 @@ class TelemetryConsumer:
     """Consumer for reading telemetry data from Kafka."""
 
     def __init__(
-        self,
-        topics: Optional[list[str]] = None,
-        group_id: Optional[str] = None
+        self, topics: Optional[list[str]] = None, group_id: Optional[str] = None
     ) -> None:
         self._settings = get_ingestion_settings()
         self._topics = topics or [self._settings.kafka_topic_telemetry]
@@ -54,7 +50,7 @@ class TelemetryConsumer:
         self,
         callback: Callable[[dict[str, Any]], None],
         max_messages: Optional[int] = None,
-        timeout_seconds: Optional[int] = None
+        timeout_seconds: Optional[int] = None,
     ) -> int:
         """Consume messages from Kafka topics.
 
@@ -78,7 +74,9 @@ class TelemetryConsumer:
                 try:
                     callback(message.value)
                     processed += 1
-                    logger.debug(f"Processed message {processed}: {message.value.get('type')}")
+                    logger.debug(
+                        f"Processed message {processed}: {message.value.get('type')}"
+                    )
 
                     if max_messages and processed >= max_messages:
                         logger.info(f"Reached max messages limit: {max_messages}")
@@ -117,9 +115,7 @@ class BatchConsumer:
     """Consumer for reading batch data from Kafka."""
 
     def __init__(
-        self,
-        topics: Optional[list[str]] = None,
-        group_id: Optional[str] = None
+        self, topics: Optional[list[str]] = None, group_id: Optional[str] = None
     ) -> None:
         self._settings = get_ingestion_settings()
         self._topics = topics or [self._settings.kafka_topic_batch]
@@ -146,9 +142,7 @@ class BatchConsumer:
         return self._consumer
 
     def consume_batch(
-        self,
-        callback: Callable[[dict[str, Any]], None],
-        batch_size: int = 100
+        self, callback: Callable[[dict[str, Any]], None], batch_size: int = 100
     ) -> list[dict[str, Any]]:
         """Consume a batch of messages from Kafka.
 
@@ -218,9 +212,6 @@ if __name__ == "__main__":
 
     try:
         print("Starting telemetry consumer...")
-        consumer.consume_messages(
-            callback=process_wind_telemetry,
-            timeout_seconds=60
-        )
+        consumer.consume_messages(callback=process_wind_telemetry, timeout_seconds=60)
     finally:
         consumer.close()

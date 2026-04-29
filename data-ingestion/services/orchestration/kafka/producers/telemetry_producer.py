@@ -2,17 +2,15 @@
 
 Publishes real-time telemetry updates to Kafka topics.
 """
-import json
 import asyncio
+import json
 from datetime import datetime
 from typing import Any, Optional
 
+from config.logger import get_logger
+from config.settings import get_ingestion_settings
 from kafka import KafkaProducer
 from kafka.errors import KafkaError
-
-from config.settings import get_ingestion_settings
-from config.logger import get_logger
-
 
 logger = get_logger(__name__)
 
@@ -52,7 +50,7 @@ class TelemetryProducer:
         pressure: float,
         location_lat: float,
         location_lon: float,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> bool:
         """Publish wind telemetry data.
 
@@ -78,23 +76,20 @@ class TelemetryProducer:
             "wind_direction": wind_direction,
             "temperature": temperature,
             "pressure": pressure,
-            "location": {
-                "lat": location_lat,
-                "lon": location_lon
-            }
+            "location": {"lat": location_lat, "lon": location_lon},
         }
 
         key = f"wind-{location_lat}-{location_lon}-{timestamp.timestamp()}"
 
         try:
             future = self.producer.send(
-                self._settings.kafka_topic_telemetry,
-                key=key,
-                value=message
+                self._settings.kafka_topic_telemetry, key=key, value=message
             )
             # Wait for send to complete
             future.get(timeout=10)
-            logger.info(f"Published wind telemetry: speed={wind_speed}, dir={wind_direction}")
+            logger.info(
+                f"Published wind telemetry: speed={wind_speed}, dir={wind_direction}"
+            )
             return True
 
         except KafkaError as e:
@@ -110,7 +105,7 @@ class TelemetryProducer:
         wind_v: float,
         location_lat: float,
         location_lon: float,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> bool:
         """Publish atmospheric telemetry data.
 
@@ -138,19 +133,14 @@ class TelemetryProducer:
             "sea_level_pressure": sea_level_pressure,
             "wind_u": wind_u,
             "wind_v": wind_v,
-            "location": {
-                "lat": location_lat,
-                "lon": location_lon
-            }
+            "location": {"lat": location_lat, "lon": location_lon},
         }
 
         key = f"atm-{location_lat}-{location_lon}-{timestamp.timestamp()}"
 
         try:
             future = self.producer.send(
-                self._settings.kafka_topic_telemetry,
-                key=key,
-                value=message
+                self._settings.kafka_topic_telemetry, key=key, value=message
             )
             future.get(timeout=10)
             logger.info(f"Published atmospheric telemetry: CO2={co2_concentration}")
@@ -161,9 +151,7 @@ class TelemetryProducer:
             return False
 
     def publish_batch_data(
-        self,
-        data: dict[str, Any],
-        dataset_type: str = "wind"
+        self, data: dict[str, Any], dataset_type: str = "wind"
     ) -> bool:
         """Publish batch data to Kafka.
 
@@ -177,16 +165,14 @@ class TelemetryProducer:
         message = {
             "type": f"batch_{dataset_type}",
             "timestamp": datetime.now().isoformat(),
-            "data": data
+            "data": data,
         }
 
         key = f"batch-{dataset_type}-{datetime.now().timestamp()}"
 
         try:
             future = self.producer.send(
-                self._settings.kafka_topic_batch,
-                key=key,
-                value=message
+                self._settings.kafka_topic_batch, key=key, value=message
             )
             future.get(timeout=10)
             logger.info(f"Published batch data: type={dataset_type}")
@@ -215,7 +201,7 @@ def publish_telemetry(
     wind_u: Optional[float] = None,
     wind_v: Optional[float] = None,
     location_lat: float = 0.0,
-    location_lon: float = 0.0
+    location_lon: float = 0.0,
 ) -> bool:
     """Publish telemetry data to Kafka.
 
@@ -227,25 +213,31 @@ def publish_telemetry(
         success = True
 
         if wind_speed is not None and wind_direction is not None:
-            success = producer.publish_wind_telemetry(
-                wind_speed=wind_speed,
-                wind_direction=wind_direction,
-                temperature=temperature or 0.0,
-                pressure=pressure or 0.0,
-                location_lat=location_lat,
-                location_lon=location_lon
-            ) and success
+            success = (
+                producer.publish_wind_telemetry(
+                    wind_speed=wind_speed,
+                    wind_direction=wind_direction,
+                    temperature=temperature or 0.0,
+                    pressure=pressure or 0.0,
+                    location_lat=location_lat,
+                    location_lon=location_lon,
+                )
+                and success
+            )
 
         if co2_concentration is not None or surface_temperature is not None:
-            success = producer.publish_atmospheric_telemetry(
-                co2_concentration=co2_concentration,
-                surface_temperature=surface_temperature or 0.0,
-                sea_level_pressure=sea_level_pressure or 0.0,
-                wind_u=wind_u or 0.0,
-                wind_v=wind_v or 0.0,
-                location_lat=location_lat,
-                location_lon=location_lon
-            ) and success
+            success = (
+                producer.publish_atmospheric_telemetry(
+                    co2_concentration=co2_concentration,
+                    surface_temperature=surface_temperature or 0.0,
+                    sea_level_pressure=sea_level_pressure or 0.0,
+                    wind_u=wind_u or 0.0,
+                    wind_v=wind_v or 0.0,
+                    location_lat=location_lat,
+                    location_lon=location_lon,
+                )
+                and success
+            )
 
         return success
 
@@ -261,5 +253,5 @@ if __name__ == "__main__":
         temperature=25.0,
         pressure=101325.0,
         location_lat=39.7406,
-        location_lon=-104.9917
+        location_lon=-104.9917,
     )

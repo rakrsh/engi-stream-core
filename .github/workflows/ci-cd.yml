@@ -73,16 +73,16 @@ jobs:
           python-version: '3.10'
 
       - name: Install dependencies
-        run: pip install mkdocs-material mkdocs-static-i18n
+        run: pip install -r docs/requirements.txt
 
       - name: Build Docs
-        run: mkdocs build
+        run: sphinx-build -b html docs/source docs/build/html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./site
+            github_token: ${{ secrets.GITHUB_TOKEN }}
+            publish_dir: docs/build/html
 
   docker-build-push:
     name: Build and Push Docker Images

@@ -8,33 +8,33 @@ from datetime import datetime
 from typing import Optional
 
 from pyspark.sql import DataFrame, SparkSession
-from pyspark.sql.functions import (
-    col, to_json, from_json, window, avg, min as spark_min,
-    max as spark_max, stddev, count, when, lit, udf, to_timestamp
-)
-from pyspark.sql.types import (
-    StructType, StructField, StringType, DoubleType, TimestampType,
-    IntegerType, FloatType
-)
-
+from pyspark.sql.functions import avg, col, count, from_json, lit
+from pyspark.sql.functions import max as spark_max
+from pyspark.sql.functions import min as spark_min
+from pyspark.sql.functions import (stddev, to_json, to_timestamp, udf, when,
+                                   window)
+from pyspark.sql.types import (DoubleType, FloatType, IntegerType, StringType,
+                               StructField, StructType, TimestampType)
 
 # Define schema for atmospheric data
-ATMOSPHERIC_DATA_SCHEMA = StructType([
-    StructField("dataset_id", StringType(), True),
-    StructField("satellite_name", StringType(), True),
-    StructField("timestamp", StringType(), True),
-    StructField("co2_concentration", DoubleType(), True),
-    StructField("ch4_concentration", DoubleType(), True),
-    StructField("ozone_concentration", DoubleType(), True),
-    StructField("aerosol_optical_depth", DoubleType(), True),
-    StructField("surface_temperature", DoubleType(), True),
-    StructField("sea_level_pressure", DoubleType(), True),
-    StructField("wind_u", DoubleType(), True),
-    StructField("wind_v", DoubleType(), True),
-    StructField("location_lat", DoubleType(), True),
-    StructField("location_lon", DoubleType(), True),
-    StructField("fetched_at", StringType(), True),
-])
+ATMOSPHERIC_DATA_SCHEMA = StructType(
+    [
+        StructField("dataset_id", StringType(), True),
+        StructField("satellite_name", StringType(), True),
+        StructField("timestamp", StringType(), True),
+        StructField("co2_concentration", DoubleType(), True),
+        StructField("ch4_concentration", DoubleType(), True),
+        StructField("ozone_concentration", DoubleType(), True),
+        StructField("aerosol_optical_depth", DoubleType(), True),
+        StructField("surface_temperature", DoubleType(), True),
+        StructField("sea_level_pressure", DoubleType(), True),
+        StructField("wind_u", DoubleType(), True),
+        StructField("wind_v", DoubleType(), True),
+        StructField("location_lat", DoubleType(), True),
+        StructField("location_lon", DoubleType(), True),
+        StructField("fetched_at", StringType(), True),
+    ]
+)
 
 
 @dataclass
@@ -50,14 +50,14 @@ class AtmosphericDataProcessor:
 
     def _setup_spark_config(self) -> None:
         """Configure Spark session."""
-        self.spark.conf.set("spark.sql.streaming.checkpointLocation", 
-                           self.checkpoint_location)
+        self.spark.conf.set(
+            "spark.sql.streaming.checkpointLocation", self.checkpoint_location
+        )
 
     def read_from_kafka(self, topic: str = "batch.raw") -> DataFrame:
         """Read atmospheric data from Kafka."""
         return (
-            self.spark.readStream
-            .format("kafka")
+            self.spark.readStream.format("kafka")
             .option("kafka.bootstrap.servers", self.kafka_bootstrap_servers)
             .option("subscribe", topic)
             .option("startingOffsets", "earliest")
@@ -68,29 +68,39 @@ class AtmosphericDataProcessor:
         """Parse and transform atmospheric data."""
         # Parse JSON value
         parsed = df.select(
-            from_json(col("value").cast("string"), ATMOSPHERIC_DATA_SCHEMA).alias("data")
+            from_json(col("value").cast("string"), ATMOSPHERIC_DATA_SCHEMA).alias(
+                "data"
+            )
         ).select("data.*")
 
         # Add processing timestamp
-        parsed = parsed.withColumn("processed_at", to_timestamp(lit(datetime.now().isoformat())))
+        parsed = parsed.withColumn(
+            "processed_at", to_timestamp(lit(datetime.now().isoformat()))
+        )
 
         # Calculate derived fields
         # Wind magnitude from u and v components
         parsed = parsed.withColumn(
-            "wind_magnitude",
-            (col("wind_u") ** 2 + col("wind_v") ** 2) ** 0.5
+            "wind_magnitude", (col("wind_u") ** 2 + col("wind_v") ** 2) ** 0.5
         )
 
         # Add quality flag
         parsed = parsed.withColumn(
             "quality_flag",
             when(
-                (col("co2_concentration") < 300) | (col("co2_concentration") > 600), "invalid"
-            ).when(
-                (col("surface_temperature") < 200) | (col("surface_temperature") > 350), "invalid"
-            ).when(
-                (col("sea_level_pressure") < 90000) | (col("sea_level_pressure") > 110000), "invalid"
-            ).otherwise("valid")
+                (col("co2_concentration") < 300) | (col("co2_concentration") > 600),
+                "invalid",
+            )
+            .when(
+                (col("surface_temperature") < 200) | (col("surface_temperature") > 350),
+                "invalid",
+            )
+            .when(
+                (col("sea_level_pressure") < 90000)
+                | (col("sea_level_pressure") > 110000),
+                "invalid",
+            )
+            .otherwise("valid"),
         )
 
         return parsed
@@ -110,31 +120,24 @@ class AtmosphericDataProcessor:
                 avg("surface_temperature").alias("avg_surface_temp"),
                 avg("sea_level_pressure").alias("avg_sea_level_pressure"),
                 avg("wind_magnitude").alias("avg_wind_magnitude"),
-                count("*").alias("record_count")
+                count("*").alias("record_count"),
             )
         )
 
     def calculate_climate_indices(self, df: DataFrame) -> DataFrame:
         """Calculate climate indices."""
         # Calculate CO2 anomaly (deviation from 400 ppm baseline)
-        df = df.withColumn(
-            "co2_anomaly",
-            col("avg_co2") - 400.0
-        )
+        df = df.withColumn("co2_anomaly", col("avg_co2") - 400.0)
 
         # Calculate temperature anomaly (deviation from 288K baseline)
-        df = df.withColumn(
-            "temp_anomaly",
-            col("avg_surface_temp") - 288.0
-        )
+        df = df.withColumn("temp_anomaly", col("avg_surface_temp") - 288.0)
 
         return df
 
     def write_to_console(self, df: DataFrame) -> None:
         """Write processed data to console."""
         query = (
-            df.writeStream
-            .format("console")
+            df.writeStream.format("console")
             .outputMode("complete")
             .option("truncate", False)
             .start()
@@ -144,8 +147,7 @@ class AtmosphericDataProcessor:
     def write_to_parquet(self, df: DataFrame, output_path: str) -> None:
         """Write processed data to Parquet files."""
         query = (
-            df.writeStream
-            .format("parquet")
+            df.writeStream.format("parquet")
             .option("path", output_path)
             .option("checkpointLocation", f"{self.checkpoint_location}/parquet")
             .outputMode("append")
@@ -157,7 +159,7 @@ class AtmosphericDataProcessor:
 def run_atmospheric_processing_job(
     kafka_servers: str = "localhost:9092",
     output_path: str = "/tmp/atmospheric_data",
-    mode: str = "batch"
+    mode: str = "batch",
 ) -> None:
     """Run the atmospheric data processing job.
 
@@ -168,9 +170,10 @@ def run_atmospheric_processing_job(
     """
     # Create Spark session
     spark = (
-        SparkSession.builder
-        .appName("AtmosphericDataProcessing")
-        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
+        SparkSession.builder.appName("AtmosphericDataProcessing")
+        .config(
+            "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
+        )
         .config("spark.sql.streaming.checkpointLocation", "/tmp/spark/checkpoints")
         .getOrCreate()
     )
@@ -198,5 +201,6 @@ def run_atmospheric_processing_job(
 
 if __name__ == "__main__":
     import sys
+
     mode = sys.argv[1] if len(sys.argv) > 1 else "batch"
     run_atmospheric_processing_job(mode=mode)
