@@ -1,0 +1,72 @@
+name: Deploy Versioned Docs
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build-docs:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Install uv
+        run: curl -LsSf https://astral.sh/uv/install.sh | sh
+
+      - name: Determine version slug
+        id: version
+        run: |
+          RAW=$(uv run python -c "import tomllib; d=tomllib.load(open('pyproject.toml','rb')); print(d['project']['version'])")
+          if echo "$RAW" | grep -q 'dev'; then
+            SLUG="dev"
+          else
+            SLUG=$(echo "$RAW" | cut -d. -f1-2)
+          fi
+          echo "raw=$RAW" >> $GITHUB_OUTPUT
+          echo "slug=$SLUG" >> $GITHUB_OUTPUT
+          echo "Docs version: $RAW -> folder: $SLUG"
+
+      - name: Install docs dependencies
+        run: uv sync --all-extras
+
+      - name: Build docs
+        run: |
+          VERSION_SLUG="${{ steps.version.outputs.slug }}"
+          mkdir -p docs/build/html/${VERSION_SLUG}
+          uv run sphinx-build -b html docs/source/ docs/build/html/${VERSION_SLUG}
+
+      - name: Create root redirect and .nojekyll
+        run: |
+          VERSION_SLUG="${{ steps.version.outputs.slug }}"
+          # .nojekyll prevents GitHub Pages from ignoring _static directories
+          touch docs/build/html/.nojekyll
+          # Root index.html redirects to the latest built version
+          cat > docs/build/html/index.html << EOF
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <title>Job Agent Docs</title>
+              <meta http-equiv="refresh" content="0; url=${VERSION_SLUG}/index.html">
+              <meta name="robots" content="noindex">
+            </head>
+            <body>
+              <p>Redirecting to <a href="${VERSION_SLUG}/index.html">${VERSION_SLUG}/index.html</a>…</p>
+            </body>
+          </html>
+          EOF
+
+      - name: Deploy to GitHub Pages
+        uses: JamesIves/github-pages-deploy-action@v4
+        with:
+          branch: gh-pages
+          folder: docs/build/html
+          clean: false          # keep other version folders already on gh-pages
+          force: true
+          single-commit: true
