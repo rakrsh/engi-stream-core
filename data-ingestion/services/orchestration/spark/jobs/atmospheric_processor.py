@@ -3,18 +3,17 @@
 Processes raw atmospheric data from Kafka, applies transformations,
 and writes to the data warehouse.
 """
+import os
+import tempfile
 from dataclasses import dataclass
 from datetime import datetime
-from typing import Optional
 
 from pyspark.sql import DataFrame, SparkSession
 from pyspark.sql.functions import avg, col, count, from_json, lit
 from pyspark.sql.functions import max as spark_max
 from pyspark.sql.functions import min as spark_min
-from pyspark.sql.functions import (stddev, to_json, to_timestamp, udf, when,
-                                   window)
-from pyspark.sql.types import (DoubleType, FloatType, IntegerType, StringType,
-                               StructField, StructType, TimestampType)
+from pyspark.sql.functions import to_timestamp, when, window
+from pyspark.sql.types import DoubleType, StringType, StructField, StructType
 
 # Define schema for atmospheric data
 ATMOSPHERIC_DATA_SCHEMA = StructType(
@@ -43,9 +42,13 @@ class AtmosphericDataProcessor:
 
     spark: SparkSession
     kafka_bootstrap_servers: str = "localhost:9092"
-    checkpoint_location: str = "/tmp/spark/checkpoints"
+    checkpoint_location: str = os.environ.get(
+        "SPARK_CHECKPOINT_DIR",
+        os.path.join(tempfile.gettempdir(), "spark", "checkpoints"),
+    )
 
     def __post_init__(self) -> None:
+        """Initialize processor after dataclass initialization."""
         self._setup_spark_config()
 
     def _setup_spark_config(self) -> None:
@@ -158,7 +161,10 @@ class AtmosphericDataProcessor:
 
 def run_atmospheric_processing_job(
     kafka_servers: str = "localhost:9092",
-    output_path: str = "/tmp/atmospheric_data",
+    output_path: str = os.environ.get(
+        "ATMOSPHERIC_OUTPUT_DIR",
+        os.path.join(tempfile.gettempdir(), "atmospheric_data"),
+    ),
     mode: str = "batch",
 ) -> None:
     """Run the atmospheric data processing job.
@@ -169,12 +175,14 @@ def run_atmospheric_processing_job(
         mode: "batch" or "streaming"
     """
     # Create Spark session
+    ckpt_dir = os.path.join(tempfile.gettempdir(), "spark", "checkpoints")
+    checkpoint_dir = os.environ.get("SPARK_CHECKPOINT_DIR", ckpt_dir)
     spark = (
         SparkSession.builder.appName("AtmosphericDataProcessing")
         .config(
             "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
         )
-        .config("spark.sql.streaming.checkpointLocation", "/tmp/spark/checkpoints")
+        .config("spark.sql.streaming.checkpointLocation", checkpoint_dir)
         .getOrCreate()
     )
 
