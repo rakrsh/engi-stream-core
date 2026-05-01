@@ -11,6 +11,11 @@ class IngestionLogger:
     """Custom logger for the ingestion service."""
 
     def __init__(self, name: str) -> None:
+        """Initialize the logger.
+
+        Args:
+            name: Logger name
+        """
         self._logger = logging.getLogger(name)
         self._configure()
 

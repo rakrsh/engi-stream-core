@@ -10,8 +10,6 @@ from typing import Any, Dict, List, Optional
 from config.logger import get_logger
 from config.settings import get_ingestion_settings
 from great_expectations import DataContext
-from great_expectations.core.batch import BatchRequest
-from great_expectations.data_asset import FileDataAsset
 from great_expectations.dataset import PandasDataset
 from great_expectations.expectations.expectation_configuration import \
     ExpectationConfiguration
@@ -25,6 +23,12 @@ class DataQualityValidator:
     def __init__(
         self, context_path: Optional[str] = None, checkpoint_name: Optional[str] = None
     ) -> None:
+        """Initialize the validator.
+
+        Args:
+            context_path: Path to Great Expectations context
+            checkpoint_name: Name of the checkpoint to use
+        """
         self._settings = get_ingestion_settings()
         self._context_path = context_path or "/tmp/gx"
         self._checkpoint_name = (
