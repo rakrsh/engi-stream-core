@@ -9,8 +9,7 @@ from typing import Any, Optional
 
 from config.logger import get_logger
 from config.settings import get_ingestion_settings
-from kafka import KafkaConsumer, KafkaProducer
-from kafka.errors import KafkaError
+from kafka import KafkaProducer
 from modules.nasa_fetcher import NASASatelliteFetcher, SatelliteDataset
 from modules.nrel_fetcher import NRELWindFetcher, WindDataset
 
@@ -21,6 +20,7 @@ class DataIngestionService:
     """Main service for ingesting NREL and NASA data."""
 
     def __init__(self) -> None:
+        """Initialize the ingestion service."""
         self._settings = get_ingestion_settings()
         self._kafka_producer: Optional[KafkaProducer] = None
         self._nrel_fetcher = NRELWindFetcher()
@@ -82,7 +82,7 @@ class DataIngestionService:
             }
 
             producer.send(
-                self._settings.kafka_topic_batch, key=f"{lat},{lon}", value=message
+                self._settings.kafka_topic_batch, key=f"{lat}, {lon}", value=message
             )
 
         producer.flush()
@@ -153,7 +153,8 @@ class DataIngestionService:
 
         producer.flush()
         logger.info(
-            f"Batch ingestion complete: {len(dataset.images)} images, {len(dataset.atmospheric_data)} atmospheric points"
+            f"Batch ingestion complete: {len(dataset.images)} images, "
+            f"{len(dataset.atmospheric_data)} atmospheric points"
         )
 
         return dataset

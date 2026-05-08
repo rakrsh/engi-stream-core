@@ -2,12 +2,10 @@
 
 Defines expectations for wind and atmospheric data quality validation.
 """
-import os
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from great_expectations.core import ExpectationConfiguration
-from great_expectations.dataset import PandasDataset, SparkDFDataset
 
 # Data quality thresholds for engineering units
 ENGINEERING_BOUNDS = {

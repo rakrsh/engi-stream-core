@@ -1,1 +1,1 @@
-# Ingestion Service Source
+"""Ingestion Service Source."""
