@@ -1,4 +1,5 @@
 """Logging configuration for the ingestion service."""
+
 import logging
 import os
 import sys

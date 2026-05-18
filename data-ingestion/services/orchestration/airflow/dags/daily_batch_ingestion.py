@@ -2,6 +2,7 @@
 
 This DAG orchestrates the daily batch load of NREL wind and NASA satellite data.
 """
+
 from datetime import datetime, timedelta
 from typing import Any
 

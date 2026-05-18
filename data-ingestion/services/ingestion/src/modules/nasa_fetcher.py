@@ -3,6 +3,7 @@
 Fetches satellite imagery and related data from NASA APIs.
 Handles Earth imagery, climate data, and atmospheric measurements.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -98,9 +99,7 @@ class NASASatelliteFetcher:
         settings = self._settings
         session = await self._get_session()
 
-        date_str = (
-            date.strftime("%Y-%m-%d") if date else datetime.now().strftime("%Y-%m-%d")
-        )
+        date_str = date.strftime("%Y-%m-%d") if date else datetime.now().strftime("%Y-%m-%d")
 
         params = {
             "api_key": settings.nasa_api_key,
@@ -138,9 +137,7 @@ class NASASatelliteFetcher:
         if "url" in data:
             image = SatelliteImage(
                 image_id=data.get("id", "unknown"),
-                capture_date=datetime.fromisoformat(
-                    data.get("date", datetime.now().isoformat())
-                ),
+                capture_date=datetime.fromisoformat(data.get("date", datetime.now().isoformat())),
                 cloud_cover=data.get("cloud_cover", 0.0),
                 location_lat=lat,
                 location_lon=lon,

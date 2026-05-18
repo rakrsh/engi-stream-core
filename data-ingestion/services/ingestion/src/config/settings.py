@@ -2,6 +2,7 @@
 
 Loads configuration from environment variables following 12-Factor App principles.
 """
+
 from functools import lru_cache
 from typing import Optional
 
@@ -29,9 +30,7 @@ class IngestionSettings(BaseSettings):
 
     # NASA API Configuration
     nasa_api_key: str = Field(default="DEMO_KEY", description="NASA API Key")
-    nasa_base_url: str = Field(
-        default="https://api.nasa.gov", description="NASA API base URL"
-    )
+    nasa_base_url: str = Field(default="https://api.nasa.gov", description="NASA API base URL")
     nasa_satellite_endpoint: str = Field(
         default="/planetary/earth/imagery",
         description="NASA satellite imagery endpoint",
@@ -44,9 +43,7 @@ class IngestionSettings(BaseSettings):
     kafka_topic_telemetry: str = Field(
         default="telemetry.raw", description="Kafka topic for real-time telemetry"
     )
-    kafka_topic_batch: str = Field(
-        default="batch.raw", description="Kafka topic for batch data"
-    )
+    kafka_topic_batch: str = Field(default="batch.raw", description="Kafka topic for batch data")
     kafka_consumer_group: str = Field(
         default="ingestion-service", description="Kafka consumer group ID"
     )
@@ -65,9 +62,7 @@ class IngestionSettings(BaseSettings):
 
     # Service Configuration
     batch_size: int = Field(default=1000, description="Batch size for processing")
-    request_timeout: int = Field(
-        default=30, description="HTTP request timeout in seconds"
-    )
+    request_timeout: int = Field(default=30, description="HTTP request timeout in seconds")
     max_retries: int = Field(default=3, description="Maximum retry attempts")
     retry_delay: int = Field(default=5, description="Retry delay in seconds")
 

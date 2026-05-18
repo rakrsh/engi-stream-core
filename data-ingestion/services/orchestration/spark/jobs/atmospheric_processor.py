@@ -3,6 +3,7 @@
 Processes raw atmospheric data from Kafka, applies transformations,
 and writes to the data warehouse.
 """
+
 import os
 import tempfile
 from dataclasses import dataclass
@@ -53,9 +54,7 @@ class AtmosphericDataProcessor:
 
     def _setup_spark_config(self) -> None:
         """Configure Spark session."""
-        self.spark.conf.set(
-            "spark.sql.streaming.checkpointLocation", self.checkpoint_location
-        )
+        self.spark.conf.set("spark.sql.streaming.checkpointLocation", self.checkpoint_location)
 
     def read_from_kafka(self, topic: str = "batch.raw") -> DataFrame:
         """Read atmospheric data from Kafka."""
@@ -71,15 +70,11 @@ class AtmosphericDataProcessor:
         """Parse and transform atmospheric data."""
         # Parse JSON value
         parsed = df.select(
-            from_json(col("value").cast("string"), ATMOSPHERIC_DATA_SCHEMA).alias(
-                "data"
-            )
+            from_json(col("value").cast("string"), ATMOSPHERIC_DATA_SCHEMA).alias("data")
         ).select("data.*")
 
         # Add processing timestamp
-        parsed = parsed.withColumn(
-            "processed_at", to_timestamp(lit(datetime.now().isoformat()))
-        )
+        parsed = parsed.withColumn("processed_at", to_timestamp(lit(datetime.now().isoformat())))
 
         # Calculate derived fields
         # Wind magnitude from u and v components
@@ -99,8 +94,7 @@ class AtmosphericDataProcessor:
                 "invalid",
             )
             .when(
-                (col("sea_level_pressure") < 90000)
-                | (col("sea_level_pressure") > 110000),
+                (col("sea_level_pressure") < 90000) | (col("sea_level_pressure") > 110000),
                 "invalid",
             )
             .otherwise("valid"),
@@ -179,9 +173,7 @@ def run_atmospheric_processing_job(
     checkpoint_dir = os.environ.get("SPARK_CHECKPOINT_DIR", ckpt_dir)
     spark = (
         SparkSession.builder.appName("AtmosphericDataProcessing")
-        .config(
-            "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
-        )
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
         .config("spark.sql.streaming.checkpointLocation", checkpoint_dir)
         .getOrCreate()
     )

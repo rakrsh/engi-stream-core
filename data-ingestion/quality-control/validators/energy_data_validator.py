@@ -3,6 +3,7 @@
 Validates incoming data against defined expectations before
 writing to the database.
 """
+
 import json
 from datetime import datetime
 from typing import Any, Dict, List, Optional
@@ -11,8 +12,7 @@ from config.logger import get_logger
 from config.settings import get_ingestion_settings
 from great_expectations import DataContext
 from great_expectations.dataset import PandasDataset
-from great_expectations.expectations.expectation_configuration import \
-    ExpectationConfiguration
+from great_expectations.expectations.expectation_configuration import ExpectationConfiguration
 
 logger = get_logger(__name__)
 
@@ -31,9 +31,7 @@ class DataQualityValidator:
         """
         self._settings = get_ingestion_settings()
         self._context_path = context_path or "/tmp/gx"
-        self._checkpoint_name = (
-            checkpoint_name or self._settings.great_expectations_checkpoint
-        )
+        self._checkpoint_name = checkpoint_name or self._settings.great_expectations_checkpoint
         self._context: Optional[DataContext] = None
 
     def _get_context(self) -> DataContext:
@@ -99,9 +97,7 @@ class DataQualityValidator:
             validation_results.append(result)
 
         # Get overall result
-        success = (
-            all(r.success for r in validation_results) if validation_results else True
-        )
+        success = all(r.success for r in validation_results) if validation_results else True
 
         result = {
             "success": success,
@@ -188,9 +184,7 @@ class DataQualityValidator:
             validation_results.append(result)
 
         # Get overall result
-        success = (
-            all(r.success for r in validation_results) if validation_results else True
-        )
+        success = all(r.success for r in validation_results) if validation_results else True
 
         result = {
             "success": success,
@@ -286,22 +280,14 @@ class DataQualityValidator:
         if wind_data:
             wind_result = self.validate_wind_data(wind_data)
             results["validations"].append({"data_type": "wind", "result": wind_result})
-            results["overall_success"] = (
-                results["overall_success"] and wind_result["success"]
-            )
+            results["overall_success"] = results["overall_success"] and wind_result["success"]
 
         if atmospheric_data:
             atm_result = self.validate_atmospheric_data(atmospheric_data)
-            results["validations"].append(
-                {"data_type": "atmospheric", "result": atm_result}
-            )
-            results["overall_success"] = (
-                results["overall_success"] and atm_result["success"]
-            )
+            results["validations"].append({"data_type": "atmospheric", "result": atm_result})
+            results["overall_success"] = results["overall_success"] and atm_result["success"]
 
-        logger.info(
-            f"Full validation complete: overall_success={results['overall_success']}"
-        )
+        logger.info(f"Full validation complete: overall_success={results['overall_success']}")
 
         return results
 

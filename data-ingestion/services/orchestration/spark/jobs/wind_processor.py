@@ -3,6 +3,7 @@
 Processes raw wind data from Kafka, applies transformations,
 and writes to the data warehouse.
 """
+
 import os
 import tempfile
 from dataclasses import dataclass
@@ -53,9 +54,7 @@ class WindDataProcessor:
 
     def _setup_spark_config(self) -> None:
         """Configure Spark session."""
-        self.spark.conf.set(
-            "spark.sql.streaming.checkpointLocation", self.checkpoint_location
-        )
+        self.spark.conf.set("spark.sql.streaming.checkpointLocation", self.checkpoint_location)
 
     def read_from_kafka(self, topic: str = "batch.raw") -> DataFrame:
         """Read wind data from Kafka."""
@@ -75,9 +74,7 @@ class WindDataProcessor:
         ).select("data.*")
 
         # Add processing timestamp
-        parsed = parsed.withColumn(
-            "processed_at", to_timestamp(lit(datetime.now().isoformat()))
-        )
+        parsed = parsed.withColumn("processed_at", to_timestamp(lit(datetime.now().isoformat())))
 
         # Calculate derived fields
         parsed = parsed.withColumn(
@@ -167,9 +164,7 @@ def run_wind_processing_job(
     checkpoint_dir = os.environ.get("SPARK_CHECKPOINT_DIR", ckpt_dir)
     spark = (
         SparkSession.builder.appName("WindDataProcessing")
-        .config(
-            "spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0"
-        )
+        .config("spark.jars.packages", "org.apache.spark:spark-sql-kafka-0-10_2.12:3.5.0")
         .config("spark.sql.streaming.checkpointLocation", checkpoint_dir)
         .getOrCreate()
     )

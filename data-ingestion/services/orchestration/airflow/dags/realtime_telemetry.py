@@ -2,6 +2,7 @@
 
 This DAG monitors the Kafka topics for real-time telemetry updates.
 """
+
 from datetime import datetime, timedelta
 from typing import Any
 

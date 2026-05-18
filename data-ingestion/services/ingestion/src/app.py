@@ -2,6 +2,7 @@
 
 Provides both batch and real-time ingestion capabilities.
 """
+
 import asyncio
 import json
 from datetime import datetime
@@ -57,9 +58,7 @@ class DataIngestionService:
         logger.info(f"Starting batch ingestion for wind data at ({lat}, {lon})")
 
         # Fetch data from NREL
-        dataset = await self._nrel_fetcher.fetch_wind_data(
-            lat, lon, hub_height=hub_height
-        )
+        dataset = await self._nrel_fetcher.fetch_wind_data(lat, lon, hub_height=hub_height)
 
         # Send to Kafka batch topic
         producer = await self._init_kafka_producer()
@@ -81,14 +80,10 @@ class DataIngestionService:
                 "fetched_at": dataset.fetched_at.isoformat(),
             }
 
-            producer.send(
-                self._settings.kafka_topic_batch, key=f"{lat}, {lon}", value=message
-            )
+            producer.send(self._settings.kafka_topic_batch, key=f"{lat}, {lon}", value=message)
 
         producer.flush()
-        logger.info(
-            f"Batch ingestion complete: {len(dataset.data_points)} points sent to Kafka"
-        )
+        logger.info(f"Batch ingestion complete: {len(dataset.data_points)} points sent to Kafka")
 
         return dataset
 
@@ -122,9 +117,7 @@ class DataIngestionService:
                 "fetched_at": dataset.fetched_at.isoformat(),
             }
 
-            producer.send(
-                self._settings.kafka_topic_batch, key=image.image_id, value=message
-            )
+            producer.send(self._settings.kafka_topic_batch, key=image.image_id, value=message)
 
         # Send atmospheric data
         for atm_data in dataset.atmospheric_data:
@@ -229,9 +222,7 @@ class DataIngestionService:
                 )
                 producer.flush()
 
-                logger.info(
-                    f"Atmospheric telemetry sent: CO2={latest_atm.co2_concentration}"
-                )
+                logger.info(f"Atmospheric telemetry sent: CO2={latest_atm.co2_concentration}")
 
             # Wait for next interval
             await asyncio.sleep(interval_seconds)

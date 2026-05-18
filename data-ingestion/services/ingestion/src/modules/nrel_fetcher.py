@@ -3,6 +3,7 @@
 Fetches wind simulation data from the NREL (National Renewable Energy Laboratory)
 API. Handles wind speed, direction, and other meteorological data.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -151,23 +152,31 @@ class NRELWindFetcher:
 
         for i, timestamp in enumerate(times):
             data_point = WindDataPoint(
-                timestamp=datetime.fromisoformat(timestamp)
-                if isinstance(timestamp, str)
-                else datetime.now(),
+                timestamp=(
+                    datetime.fromisoformat(timestamp)
+                    if isinstance(timestamp, str)
+                    else datetime.now()
+                ),
                 wind_speed=wind_speeds[i] if i < len(wind_speeds) else 0.0,
                 wind_direction=wind_directions[i] if i < len(wind_directions) else 0.0,
                 wind_direction_cardinal=self._degrees_to_cardinal(
                     wind_directions[i] if i < len(wind_directions) else 0.0
                 ),
-                air_density=outputs.get("air_density", [None] * len(times))[i]
-                if i < len(outputs.get("air_density", []))
-                else None,
-                temperature=outputs.get("temperature", [None] * len(times))[i]
-                if i < len(outputs.get("temperature", []))
-                else None,
-                pressure=outputs.get("pressure", [None] * len(times))[i]
-                if i < len(outputs.get("pressure", []))
-                else None,
+                air_density=(
+                    outputs.get("air_density", [None] * len(times))[i]
+                    if i < len(outputs.get("air_density", []))
+                    else None
+                ),
+                temperature=(
+                    outputs.get("temperature", [None] * len(times))[i]
+                    if i < len(outputs.get("temperature", []))
+                    else None
+                ),
+                pressure=(
+                    outputs.get("pressure", [None] * len(times))[i]
+                    if i < len(outputs.get("pressure", []))
+                    else None
+                ),
                 hub_height=hub_height,
                 location_lat=lat,
                 location_lon=lon,
@@ -182,9 +191,7 @@ class NRELWindFetcher:
             metadata=data.get("meta", {}),
         )
 
-    def _generate_mock_data(
-        self, lat: float, lon: float, hub_height: float
-    ) -> WindDataset:
+    def _generate_mock_data(self, lat: float, lon: float, hub_height: float) -> WindDataset:
         """Generate mock wind data for development/testing."""
         import random
 
