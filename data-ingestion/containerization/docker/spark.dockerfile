@@ -8,11 +8,11 @@ RUN pip install --no-cache-dir \
     psycopg2-binary
 
 # Copy Spark jobs
-COPY services/orchestration/spark/jobs/ /opt/spark/jobs/
+COPY data-ingestion/services/orchestration/spark/jobs/ /opt/spark/jobs/
 
 # Set environment variables
-ENV SPARK_DAEMON_JAVA_OPTS="-Dspark.driver.bindAddress=0.0.0.0"
-ENV PYTHONPATH=/opt/spark:$PYTHONPATH
+ENV SPARK_DAEMON_JAVA_OPTS="-Dspark.driver.bindAddress=0.0.0.0" \
+    PYTHONPATH=/opt/spark
 
 # Default command
 CMD ["spark-class", "org.apache.spark.deploy.master.Master"]

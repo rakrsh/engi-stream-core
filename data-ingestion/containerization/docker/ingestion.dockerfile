@@ -17,13 +17,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy requirements first for better caching
-COPY services/ingestion/requirements.txt .
+COPY data-ingestion/services/ingestion/requirements.txt .
 
 # Install Python dependencies
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Copy application code
-COPY services/ingestion/src/ ./src/
+COPY data-ingestion/services/ingestion/src/ ./src/
 
 # Create config directory
 RUN mkdir -p /app/config
