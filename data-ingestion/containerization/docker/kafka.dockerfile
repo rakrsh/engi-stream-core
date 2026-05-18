@@ -7,8 +7,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy configuration
-COPY containerization/docker/kafka/server.properties /etc/kafka/server.properties
-COPY containerization/docker/kafka/zookeeper.properties /etc/kafka/zookeeper.properties
+COPY data-ingestion/containerization/docker/kafka/server.properties /etc/kafka/server.properties
+COPY data-ingestion/containerization/docker/kafka/zookeeper.properties /etc/kafka/zookeeper.properties
 
 # Expose ports
 EXPOSE 9092 29092 8081

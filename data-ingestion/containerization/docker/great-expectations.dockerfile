@@ -13,7 +13,7 @@ RUN pip install --no-cache-dir \
     kafka-python
 
 # Copy quality control files
-COPY quality-control/ /tmp/gx/
+COPY data-ingestion/quality-control/ /tmp/gx/
 
 # Set working directory
 WORKDIR /tmp/gx

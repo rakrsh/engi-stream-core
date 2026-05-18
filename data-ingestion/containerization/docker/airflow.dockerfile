@@ -9,13 +9,13 @@ RUN pip install --no-cache-dir \
     aiohttp
 
 # Copy DAGs
-COPY services/orchestration/airflow/dags/ /opt/airflow/dags/
+COPY data-ingestion/services/orchestration/airflow/dags/ /opt/airflow/dags/
 
 # Copy Spark jobs
-COPY services/orchestration/spark/jobs/ /opt/spark/jobs/
+COPY data-ingestion/services/orchestration/spark/jobs/ /opt/spark/jobs/
 
 # Set environment variables
-ENV PYTHONPATH=/opt/airflow:/opt/spark:$PYTHONPATH
+ENV PYTHONPATH=/opt/airflow:/opt/spark
 
 # Default arguments
 CMD ["webserver"]
