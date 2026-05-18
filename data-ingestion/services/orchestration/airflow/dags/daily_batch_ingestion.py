@@ -10,7 +10,6 @@ from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
 from airflow.providers.http.sensors.http import HttpSensor
-from airflow.providers.kafka.operators.produce import KafkaOperator
 from airflow.providers.postgres.operators.postgres import PostgresOperator
 from airflow.utils.task_group import TaskGroup
 
@@ -160,8 +159,16 @@ with DAG(
             task_id="store_to_warehouse",
             postgres_conn_id="postgres_warehouse",
             sql="""
-                INSERT INTO daily_metrics (date, source, record_count, created_at)
-                VALUES ({{ ds }}, 'batch', {{ task_instance.xcom_pull(task_ids='processing_group.aggregate_daily_data')['records_processed'] }}, NOW())
+                INSERT INTO daily_metrics (
+                    date, source, record_count, created_at
+                )
+                VALUES (
+                    {{ ds }}, 'batch',
+                    {{ task_instance.xcom_pull(
+                        task_ids='processing_group.aggregate_daily_data'
+                    )['records_processed'] }},
+                    NOW()
+                )
             """,
         )
 

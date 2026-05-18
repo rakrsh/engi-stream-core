@@ -47,6 +47,7 @@ class NRELWindFetcher:
     """Fetches wind simulation data from NREL API."""
 
     def __init__(self) -> None:
+        """Initialize the NREL wind fetcher."""
         self._settings = get_ingestion_settings()
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -222,9 +223,9 @@ class NRELWindFetcher:
 
         return WindDataset(
             dataset_id="mock-wind-data",
-            location_name=f"Location ({lat}, {lon})",
-            data_points=data_points,
-            fetched_at=datetime.now(),
+            location_name=f"Location ({lat}, {lon})",  # noqa: E225
+            data_points=data_points,  # noqa: E225
+            fetched_at=datetime.now(),  # noqa: E225
             metadata={"source": "mock", "hub_height": hub_height},
         )
 
@@ -254,12 +255,15 @@ class NRELWindFetcherContext:
     """Async context manager for NRELWindFetcher."""
 
     def __init__(self) -> None:
+        """Initialize the context manager."""
         self._fetcher: Optional[NRELWindFetcher] = None
 
     async def __aenter__(self) -> NRELWindFetcher:
+        """Enter the async context."""
         self._fetcher = NRELWindFetcher()
         return self._fetcher
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit the async context and cleanup resources."""
         if self._fetcher:
             await self._fetcher.close()

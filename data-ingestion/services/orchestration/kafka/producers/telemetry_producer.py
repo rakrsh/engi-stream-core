@@ -3,7 +3,6 @@
 Publishes real-time telemetry updates to Kafka topics.
 """
 
-import asyncio
 import json
 from datetime import datetime
 from typing import Any, Optional
@@ -20,6 +19,7 @@ class TelemetryProducer:
     """Producer for publishing telemetry data to Kafka."""
 
     def __init__(self) -> None:
+        """Initialize the telemetry producer."""
         self._settings = get_ingestion_settings()
         self._producer: Optional[KafkaProducer] = None
 
@@ -231,7 +231,7 @@ def publish_telemetry(
                     location_lat=location_lat,
                     location_lon=location_lon,
                 )
-                and success
+                and success  # noqa: W503
             )
 
         return success

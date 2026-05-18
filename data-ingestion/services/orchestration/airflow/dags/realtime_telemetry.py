@@ -9,7 +9,6 @@ from typing import Any
 from airflow import DAG
 from airflow.operators.bash import BashOperator
 from airflow.operators.python import PythonOperator
-from airflow.providers.http.operators.http import SimpleHttpOperator
 from airflow.providers.kafka.sensors.kafka import KafkaSensor
 from airflow.utils.task_group import TaskGroup
 

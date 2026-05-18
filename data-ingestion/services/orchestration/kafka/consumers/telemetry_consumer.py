@@ -19,6 +19,12 @@ class TelemetryConsumer:
     """Consumer for reading telemetry data from Kafka."""
 
     def __init__(self, topics: Optional[list[str]] = None, group_id: Optional[str] = None) -> None:
+        """Initialize the telemetry consumer.
+
+        Args:
+            topics: List of Kafka topics to subscribe to
+            group_id: Kafka consumer group ID
+        """
         self._settings = get_ingestion_settings()
         self._topics = topics or [self._settings.kafka_topic_telemetry]
         self._group_id = group_id or self._settings.kafka_consumer_group
@@ -112,6 +118,12 @@ class BatchConsumer:
     """Consumer for reading batch data from Kafka."""
 
     def __init__(self, topics: Optional[list[str]] = None, group_id: Optional[str] = None) -> None:
+        """Initialize the batch consumer.
+
+        Args:
+            topics: List of Kafka topics to subscribe to
+            group_id: Kafka consumer group ID
+        """
         self._settings = get_ingestion_settings()
         self._topics = topics or [self._settings.kafka_topic_batch]
         self._group_id = group_id or f"{self._settings.kafka_consumer_group}-batch"
