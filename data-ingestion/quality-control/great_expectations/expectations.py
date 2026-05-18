@@ -2,6 +2,7 @@
 
 Defines expectations for wind and atmospheric data quality validation.
 """
+
 from datetime import datetime
 from typing import Any, Dict, List
 
@@ -230,9 +231,7 @@ def get_location_expectations() -> List[ExpectationConfiguration]:
     ]
 
 
-def create_expectation_suite(
-    suite_name: str, data_type: str = "wind"
-) -> Dict[str, Any]:
+def create_expectation_suite(suite_name: str, data_type: str = "wind") -> Dict[str, Any]:
     """Create a Great Expectations expectation suite.
 
     Args:

@@ -3,6 +3,7 @@
 Fetches satellite imagery and related data from NASA APIs.
 Handles Earth imagery, climate data, and atmospheric measurements.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -62,6 +63,7 @@ class NASASatelliteFetcher:
     """Fetches satellite data from NASA APIs."""
 
     def __init__(self) -> None:
+        """Initialize the NASA satellite fetcher."""
         self._settings = get_ingestion_settings()
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -98,9 +100,7 @@ class NASASatelliteFetcher:
         settings = self._settings
         session = await self._get_session()
 
-        date_str = (
-            date.strftime("%Y-%m-%d") if date else datetime.now().strftime("%Y-%m-%d")
-        )
+        date_str = date.strftime("%Y-%m-%d") if date else datetime.now().strftime("%Y-%m-%d")
 
         params = {
             "api_key": settings.nasa_api_key,
@@ -138,9 +138,7 @@ class NASASatelliteFetcher:
         if "url" in data:
             image = SatelliteImage(
                 image_id=data.get("id", "unknown"),
-                capture_date=datetime.fromisoformat(
-                    data.get("date", datetime.now().isoformat())
-                ),
+                capture_date=datetime.fromisoformat(data.get("date", datetime.now().isoformat())),
                 cloud_cover=data.get("cloud_cover", 0.0),
                 location_lat=lat,
                 location_lon=lon,
@@ -190,15 +188,15 @@ class NASASatelliteFetcher:
         # Generate mock images
         images = [
             SatelliteImage(
-                image_id=f"LANDSAT8-{base_time.strftime('%Y%m%d')}-{i:03d}",
+                image_id=f"LANDSAT8-{base_time.strftime('%Y%m%d')}-{i:03d}",  # noqa: E231
                 capture_date=base_time,
                 cloud_cover=round(random.uniform(0, 30), 1),
                 location_lat=lat + random.uniform(-0.01, 0.01),
                 location_lon=lon + random.uniform(-0.01, 0.01),
-                image_url=f"https://api.nasa.gov/image/{i}",
-                thumbnail_url=f"https://api.nasa.gov/thumb/{i}",
+                image_url=f"https://api.nasa.gov/image/{i}",  # noqa: E231
+                thumbnail_url=f"https://api.nasa.gov/thumb/{i}",  # noqa: E231
                 source="Landsat8",
-                band_info={"visible": "true", "infrared": "true", "thermal": "true"},
+                band_info={"visible": "true", "infrared": "true", "thermal": "true"},  # noqa: E231
             )
             for i in range(5)
         ]
@@ -282,12 +280,15 @@ class NASASatelliteFetcherContext:
     """Async context manager for NASASatelliteFetcher."""
 
     def __init__(self) -> None:
+        """Initialize the context manager."""
         self._fetcher: Optional[NASASatelliteFetcher] = None
 
     async def __aenter__(self) -> NASASatelliteFetcher:
+        """Enter the async context."""
         self._fetcher = NASASatelliteFetcher()
         return self._fetcher
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit the async context and cleanup resources."""
         if self._fetcher:
             await self._fetcher.close()

@@ -1,0 +1,28 @@
+# Safety Policy File
+# Defines dependency vulnerability policies and exceptions
+
+version: 2
+
+security:
+  # Scan all dependencies for vulnerabilities
+  scan-dependencies: true
+
+  # Continue on error (don't fail the build for policy violations)
+  continue-on-error: false
+
+  # Report only vulnerabilities with severity >= medium
+  report-level: medium
+
+ignore:
+  # List known vulnerabilities to ignore (if any)
+  # Format:
+  # - id: CVE-2023-XXXXX
+  #   reason: "Detailed reason for ignoring this vulnerability"
+  #   expires: "2024-12-31"
+
+vulnerability:
+  # Fail on vulnerabilities with severity >= medium
+  fail-on: medium
+
+  # Apply only to direct dependencies
+  apply-to: dependencies

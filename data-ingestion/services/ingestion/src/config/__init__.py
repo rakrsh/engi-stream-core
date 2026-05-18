@@ -1,10 +1,9 @@
 """Logging configuration for the ingestion service."""
+
 import logging
 import os
 import sys
 from typing import Any
-
-from config.settings import get_ingestion_settings
 
 
 class IngestionLogger:
@@ -21,8 +20,6 @@ class IngestionLogger:
 
     def _configure(self) -> None:
         """Configure logger based on environment."""
-        settings = get_ingestion_settings()
-
         # Set level based on environment
         level = logging.INFO
         if os.getenv("ENV", "production") == "development":

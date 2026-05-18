@@ -3,6 +3,7 @@
 Fetches wind simulation data from the NREL (National Renewable Energy Laboratory)
 API. Handles wind speed, direction, and other meteorological data.
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Any, Optional
@@ -46,6 +47,7 @@ class NRELWindFetcher:
     """Fetches wind simulation data from NREL API."""
 
     def __init__(self) -> None:
+        """Initialize the NREL wind fetcher."""
         self._settings = get_ingestion_settings()
         self._session: Optional[aiohttp.ClientSession] = None
 
@@ -151,23 +153,31 @@ class NRELWindFetcher:
 
         for i, timestamp in enumerate(times):
             data_point = WindDataPoint(
-                timestamp=datetime.fromisoformat(timestamp)
-                if isinstance(timestamp, str)
-                else datetime.now(),
+                timestamp=(
+                    datetime.fromisoformat(timestamp)
+                    if isinstance(timestamp, str)
+                    else datetime.now()
+                ),
                 wind_speed=wind_speeds[i] if i < len(wind_speeds) else 0.0,
                 wind_direction=wind_directions[i] if i < len(wind_directions) else 0.0,
                 wind_direction_cardinal=self._degrees_to_cardinal(
                     wind_directions[i] if i < len(wind_directions) else 0.0
                 ),
-                air_density=outputs.get("air_density", [None] * len(times))[i]
-                if i < len(outputs.get("air_density", []))
-                else None,
-                temperature=outputs.get("temperature", [None] * len(times))[i]
-                if i < len(outputs.get("temperature", []))
-                else None,
-                pressure=outputs.get("pressure", [None] * len(times))[i]
-                if i < len(outputs.get("pressure", []))
-                else None,
+                air_density=(
+                    outputs.get("air_density", [None] * len(times))[i]
+                    if i < len(outputs.get("air_density", []))
+                    else None
+                ),
+                temperature=(
+                    outputs.get("temperature", [None] * len(times))[i]
+                    if i < len(outputs.get("temperature", []))
+                    else None
+                ),
+                pressure=(
+                    outputs.get("pressure", [None] * len(times))[i]
+                    if i < len(outputs.get("pressure", []))
+                    else None
+                ),
                 hub_height=hub_height,
                 location_lat=lat,
                 location_lon=lon,
@@ -182,9 +192,7 @@ class NRELWindFetcher:
             metadata=data.get("meta", {}),
         )
 
-    def _generate_mock_data(
-        self, lat: float, lon: float, hub_height: float
-    ) -> WindDataset:
+    def _generate_mock_data(self, lat: float, lon: float, hub_height: float) -> WindDataset:
         """Generate mock wind data for development/testing."""
         import random
 
@@ -215,10 +223,10 @@ class NRELWindFetcher:
 
         return WindDataset(
             dataset_id="mock-wind-data",
-            location_name=f"Location ({lat}, {lon})",
-            data_points=data_points,
+            location_name=f"Location ({lat}, {lon})",  # noqa: E225
+            data_points=data_points,  # noqa: E225
             fetched_at=datetime.now(),
-            metadata={"source": "mock", "hub_height": hub_height},
+            metadata={"source": "mock", "hub_height": hub_height},  # noqa: E225
         )
 
     async def fetch_multiple_locations(
@@ -247,12 +255,15 @@ class NRELWindFetcherContext:
     """Async context manager for NRELWindFetcher."""
 
     def __init__(self) -> None:
+        """Initialize the context manager."""
         self._fetcher: Optional[NRELWindFetcher] = None
 
     async def __aenter__(self) -> NRELWindFetcher:
+        """Enter the async context."""
         self._fetcher = NRELWindFetcher()
         return self._fetcher
 
     async def __aexit__(self, exc_type: Any, exc_val: Any, exc_tb: Any) -> None:
+        """Exit the async context and cleanup resources."""
         if self._fetcher:
             await self._fetcher.close()

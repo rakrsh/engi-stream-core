@@ -1,4 +1,5 @@
 """Sphinx configuration file for the Engi-Stream Core project."""
+
 from typing import Any
 
 # Configuration file for the Sphinx documentation builder.

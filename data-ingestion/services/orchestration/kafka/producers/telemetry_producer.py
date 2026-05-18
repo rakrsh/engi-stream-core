@@ -2,7 +2,7 @@
 
 Publishes real-time telemetry updates to Kafka topics.
 """
-import asyncio
+
 import json
 from datetime import datetime
 from typing import Any, Optional
@@ -19,6 +19,7 @@ class TelemetryProducer:
     """Producer for publishing telemetry data to Kafka."""
 
     def __init__(self) -> None:
+        """Initialize the telemetry producer."""
         self._settings = get_ingestion_settings()
         self._producer: Optional[KafkaProducer] = None
 
@@ -87,9 +88,7 @@ class TelemetryProducer:
             )
             # Wait for send to complete
             future.get(timeout=10)
-            logger.info(
-                f"Published wind telemetry: speed={wind_speed}, dir={wind_direction}"
-            )
+            logger.info(f"Published wind telemetry: speed={wind_speed}, dir={wind_direction}")
             return True
 
         except KafkaError as e:
@@ -150,9 +149,7 @@ class TelemetryProducer:
             logger.error(f"Failed to publish atmospheric telemetry: {e}")
             return False
 
-    def publish_batch_data(
-        self, data: dict[str, Any], dataset_type: str = "wind"
-    ) -> bool:
+    def publish_batch_data(self, data: dict[str, Any], dataset_type: str = "wind") -> bool:
         """Publish batch data to Kafka.
 
         Args:
@@ -171,9 +168,7 @@ class TelemetryProducer:
         key = f"batch-{dataset_type}-{datetime.now().timestamp()}"
 
         try:
-            future = self.producer.send(
-                self._settings.kafka_topic_batch, key=key, value=message
-            )
+            future = self.producer.send(self._settings.kafka_topic_batch, key=key, value=message)
             future.get(timeout=10)
             logger.info(f"Published batch data: type={dataset_type}")
             return True
@@ -222,7 +217,7 @@ def publish_telemetry(
                     location_lat=location_lat,
                     location_lon=location_lon,
                 )
-                and success
+                and success  # noqa: W503
             )
 
         if co2_concentration is not None or surface_temperature is not None:
@@ -236,7 +231,7 @@ def publish_telemetry(
                     location_lat=location_lat,
                     location_lon=location_lon,
                 )
-                and success
+                and success  # noqa: W503
             )
 
         return success
