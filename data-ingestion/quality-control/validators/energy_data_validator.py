@@ -121,7 +121,7 @@ class DataQualityValidator:
             f"{result['expectations_failed']} failed"
         )
 
-        return result
+        return result  # type: ignore[no-any-return]
 
     def validate_atmospheric_data(self, data: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Validate atmospheric data against expectations.

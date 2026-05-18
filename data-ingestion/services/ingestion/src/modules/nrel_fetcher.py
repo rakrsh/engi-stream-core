@@ -225,8 +225,8 @@ class NRELWindFetcher:
             dataset_id="mock-wind-data",
             location_name=f"Location ({lat}, {lon})",  # noqa: E225
             data_points=data_points,  # noqa: E225
-            fetched_at=datetime.now(),  # noqa: E225
-            metadata={"source": "mock", "hub_height": hub_height},
+            fetched_at=datetime.now(),
+            metadata={"source": "mock", "hub_height": hub_height},  # noqa: E225
         )
 
     async def fetch_multiple_locations(

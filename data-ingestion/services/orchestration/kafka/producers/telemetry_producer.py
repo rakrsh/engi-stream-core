@@ -217,7 +217,7 @@ def publish_telemetry(
                     location_lat=location_lat,
                     location_lon=location_lon,
                 )
-                and success
+                and success  # noqa: W503
             )
 
         if co2_concentration is not None or surface_temperature is not None:
