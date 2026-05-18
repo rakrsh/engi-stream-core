@@ -16,7 +16,6 @@ keywords = ["data-ingestion", "orchestration", "agents", "streaming", "kubernete
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
@@ -28,9 +27,6 @@ Homepage = "https://github.com/ravik/engi-stream-core"
 Repository = "https://github.com/ravik/engi-stream-core.git"
 Issues = "https://github.com/ravik/engi-stream-core/issues"
 Documentation = "https://github.com/ravik/engi-stream-core/docs"
-
-[tool.setuptools]
-packages = ["data_ingestion"]
 
 [tool.black]
 line-length = 100
